@@ -55,6 +55,14 @@ pipeline {
           currentBuild.description = "${env.BUILD_KIND} (${env.IMAGE_TAG})"
         }
         echo "${env.BUILD_KIND} / Image tag: ${env.IMAGE_TAG}"
+
+        // 빌드 컨테이너용 네트워크 (MTU 1450). 기본 브리지(MTU 1500)는 VM NIC(1450)보다 커서
+        // 외부 HTTPS 핸드셰이크가 멈춘다. 이미 있으면 그대로 쓰고, 다른 빌드가 동시에 만들어도 통과
+        sh '''
+          docker network inspect ci-net-mtu1450 >/dev/null 2>&1 \
+            || docker network create --opt com.docker.network.driver.mtu=1450 ci-net-mtu1450 \
+            || docker network inspect ci-net-mtu1450 >/dev/null
+        '''
       }
     }
 
@@ -64,6 +72,7 @@ pipeline {
         docker {
           image 'eclipse-temurin:17-jdk'   // Jenkins 서버에 JDK를 따로 설치하지 않아도 됨
           reuseNode true                   // 같은 workspace 사용 → 빌드 결과물(JAR)이 다음 단계로 이어짐
+          args '--network ci-net-mtu1450'  // Prepare에서 만든 MTU 1450 네트워크 사용
         }
       }
       environment {
@@ -97,7 +106,8 @@ pipeline {
                                           usernameVariable: 'GH_USER',
                                           passwordVariable: 'GH_TOKEN')]) {
           sh '''
-            docker build -t "$IMAGE_REPO:$IMAGE_TAG" .
+            # docker build는 사용자 정의 네트워크를 못 써서 host 네트워크(VM NIC MTU 그대로) 사용
+            docker build --network host -t "$IMAGE_REPO:$IMAGE_TAG" .
             echo "$GH_TOKEN" | docker login "$REGISTRY" -u "$GH_USER" --password-stdin
             docker push "$IMAGE_REPO:$IMAGE_TAG"
             docker logout "$REGISTRY"
