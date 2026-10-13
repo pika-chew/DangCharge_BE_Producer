@@ -227,12 +227,14 @@ pipeline {
       script {
         if (env.BRANCH_NAME == 'main') {
           notifySlack('good', "✅ ${env.APP_NAME} main 배포 이미지 push 완료: ${env.IMAGE_REPO}:${env.IMAGE_TAG}\n<${env.BUILD_URL}|빌드 #${env.BUILD_NUMBER}>")
+        } else if (!env.CHANGE_ID) {       // PR이 아닌 브랜치 빌드 = develop 머지
+          notifySlack('good', "✅ ${env.APP_NAME} ${env.BRANCH_NAME} 머지 빌드 성공 (${env.IMAGE_TAG})\n<${env.BUILD_URL}|빌드 #${env.BUILD_NUMBER}>")
         }
       }
     }
     fixed {
       script {
-        if (env.BRANCH_NAME != 'main') {   // main은 위 success 알림으로 충분
+        if (env.CHANGE_ID) {   // PR 빌드만 (브랜치 빌드는 위 success에서 매번 알림)
           notifySlack('good', "✅ ${env.APP_NAME} CI 복구 (${env.BUILD_KIND})\n<${env.BUILD_URL}|빌드 #${env.BUILD_NUMBER}>")
         }
       }
