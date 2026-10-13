@@ -48,6 +48,7 @@ api/
     ├── service/         {Verb}{Target}UseCase
     ├── event/           {Name}Listener          (필요 시)
     ├── scheduler/       {Name}Scheduler         (필요 시)
+    ├── runner/          {Name}Runner, 시작 시 한 번 실행 (필요 시)
     └── port/            외부 연동 인터페이스     (필요 시)
 
 domain/
