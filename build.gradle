@@ -32,6 +32,11 @@ dependencies {
 	testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
+// 실행 가능한 bootJar만 만든다 (-plain.jar가 같이 생기면 Dockerfile의 COPY *.jar가 실패)
+tasks.named('jar') {
+	enabled = false
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
 }
