@@ -7,11 +7,13 @@ SET NAMES utf8mb4;
 
 CREATE TABLE users (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    email VARCHAR(254) NOT NULL COMMENT '로그인 이메일',
+    login_id VARCHAR(50) NOT NULL COMMENT '로그인 아이디',
     password_hash VARCHAR(255) NOT NULL COMMENT '비밀번호 해시',
+    username VARCHAR(50) NOT NULL COMMENT '유저네임',
+    vehicle_number VARCHAR(20) NOT NULL COMMENT '차량번호',
     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id),
-    CONSTRAINT uq_users_email UNIQUE (email)
+    CONSTRAINT uq_users_login_id UNIQUE (login_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE vehicles (

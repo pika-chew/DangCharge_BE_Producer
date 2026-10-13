@@ -22,19 +22,27 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 @EqualsAndHashCode(of = "id", callSuper = false)
-@Table(name = "users", uniqueConstraints = @UniqueConstraint(name = "uq_users_email", columnNames = "email"))
+@Table(name = "users", uniqueConstraints = @UniqueConstraint(name = "uq_users_login_id", columnNames = "login_id"))
 public class User extends BaseTimeEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	/** 로그인 이메일 */
-	@Column(nullable = false, length = 254)
-	private String email;
+	/** 로그인 아이디 */
+	@Column(name = "login_id", nullable = false, length = 50)
+	private String loginId;
 
 	/** 비밀번호 해시 */
 	@Column(name = "password_hash", nullable = false)
 	private String passwordHash;
+
+	/** 유저네임 */
+	@Column(nullable = false, length = 50)
+	private String username;
+
+	/** 차량번호 */
+	@Column(name = "vehicle_number", nullable = false, length = 20)
+	private String vehicleNumber;
 
 }
