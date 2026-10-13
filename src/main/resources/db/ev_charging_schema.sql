@@ -19,7 +19,7 @@ CREATE TABLE users (
 CREATE TABLE vehicles (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     user_id BIGINT UNSIGNED NOT NULL,
-    model VARCHAR(100) NOT NULL COMMENT '차종',
+    model VARCHAR(30) NOT NULL COMMENT '차종, 선택지 중 하나',
     connector_type VARCHAR(50) NOT NULL COMMENT '충전 규격',
     battery_capacity_kwh DECIMAL(8,2) NULL COMMENT '배터리 용량, 선택',
     current_soc_percent DECIMAL(5,2) NULL COMMENT '현재 잔량 %, 선택',
@@ -27,6 +27,9 @@ CREATE TABLE vehicles (
     PRIMARY KEY (id),
     KEY idx_vehicles_user (user_id),
     CONSTRAINT fk_vehicles_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT chk_vehicles_model CHECK (
+        model IN ('SM3_ZE', 'RAY_EV', 'SOUL_EV', 'NISSAN_LEAF', 'IONIQ_EV', 'BMW_I3', 'SPARK_EV', 'BOLT_EV', 'TESLA')
+    ),
     CONSTRAINT chk_vehicles_capacity CHECK (battery_capacity_kwh > 0),
     CONSTRAINT chk_vehicles_soc CHECK (current_soc_percent BETWEEN 0 AND 100)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -36,14 +39,31 @@ CREATE TABLE stations (
     external_id VARCHAR(100) NULL COMMENT '외부 ID, 선택; 단일 외부 공급원 기준',
     name VARCHAR(200) NOT NULL COMMENT '충전소 이름',
     address VARCHAR(500) NOT NULL,
-    region VARCHAR(100) NOT NULL COMMENT '지역',
+    metro VARCHAR(50) NOT NULL COMMENT '시도',
+    city VARCHAR(50) NOT NULL COMMENT '시군구',
+    rapid_count INT UNSIGNED NOT NULL DEFAULT 0 COMMENT '급속 충전기 수',
+    slow_count INT UNSIGNED NOT NULL DEFAULT 0 COMMENT '완속 충전기 수',
     latitude DECIMAL(10,7) NULL COMMENT '위도, 선택',
     longitude DECIMAL(10,7) NULL COMMENT '경도, 선택',
     synced_at DATETIME(6) NULL COMMENT '마지막 동기화 시각',
     PRIMARY KEY (id),
+    KEY idx_stations_metro_city (metro, city),
     CONSTRAINT uq_stations_external UNIQUE (external_id),
+    CONSTRAINT uq_stations_name_address UNIQUE (name, address),
     CONSTRAINT chk_stations_latitude CHECK (latitude BETWEEN -90 AND 90),
     CONSTRAINT chk_stations_longitude CHECK (longitude BETWEEN -180 AND 180)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 충전소에서 충전할 수 있는 차종. 한전 설치현황의 carType을 차종별 행으로 풀어 저장한다.
+CREATE TABLE station_supported_models (
+    station_id BIGINT UNSIGNED NOT NULL,
+    vehicle_model VARCHAR(30) NOT NULL COMMENT '충전 가능 차종, vehicles.model과 같은 값',
+    PRIMARY KEY (station_id, vehicle_model),
+    KEY idx_station_models_model (vehicle_model),
+    CONSTRAINT fk_station_models_station FOREIGN KEY (station_id) REFERENCES stations (id),
+    CONSTRAINT chk_station_models_model CHECK (
+        vehicle_model IN ('SM3_ZE', 'RAY_EV', 'SOUL_EV', 'NISSAN_LEAF', 'IONIQ_EV', 'BMW_I3', 'SPARK_EV', 'BOLT_EV', 'TESLA')
+    )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE chargers (
