@@ -36,5 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### Local only ###
+.env
+/scripts/get_ev_data.py
+
 ### Generated data ###
 /data/
