@@ -9,10 +9,11 @@ import com.picka_chew.dangcharge.common.annotation.UseCase;
 import com.picka_chew.dangcharge.common.exception.ErrorStatus;
 import com.picka_chew.dangcharge.common.exception.GeneralException;
 import com.picka_chew.dangcharge.domain.station.adaptor.StationAdaptor;
+import com.picka_chew.dangcharge.domain.station.policy.MetroNamePolicy;
 
 import lombok.RequiredArgsConstructor;
 
-/** 검색어(이름·주소 부분 일치), 시도, 시군구 중 하나 이상이 있어야 한다. 최대 50건 */
+/** 검색어(이름·주소 부분 일치), 시도, 시군구 중 하나 이상이 있어야 한다. 시도는 "서울시"처럼 줄여 써도 된다. 최대 50건 */
 @UseCase
 @RequiredArgsConstructor
 public class SearchStationsUseCase {
@@ -24,7 +25,7 @@ public class SearchStationsUseCase {
 	@Transactional(readOnly = true)
 	public List<StationSummaryResponse> execute(String keyword, String metro, String city) {
 		String trimmedKeyword = blankToNull(keyword);
-		String trimmedMetro = blankToNull(metro);
+		String trimmedMetro = MetroNamePolicy.toOfficialName(blankToNull(metro));
 		String trimmedCity = blankToNull(city);
 		if (trimmedKeyword == null && trimmedMetro == null && trimmedCity == null) {
 			throw new GeneralException(ErrorStatus.INVALID_SEARCH_CONDITION);

@@ -60,7 +60,8 @@ public class StationApiController {
 	}
 
 	@Operation(summary = "주소/이름 검색",
-			description = "시도(metro)와 시군구(city)로 범위를 좁힐 수 있다. 세 조건 중 하나 이상이 필요하고 최대 50건이다.")
+			description = "시도(metro)와 시군구(city)로 범위를 좁힐 수 있다. 시도는 \"서울\", \"서울시\"처럼 줄여 써도 된다. "
+					+ "시군구는 \"강남구\"처럼 정식 이름으로 넣는다. 세 조건 중 하나 이상이 필요하고 최대 50건이다.")
 	@SecurityRequirements
 	@GetMapping("/search")
 	public ApiResponseDto<List<StationSummaryResponse>> searchStations(
