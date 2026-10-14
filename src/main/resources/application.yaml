@@ -1,6 +1,8 @@
 spring:
   application:
     name: dangcharge
+  config:
+    import: optional:file:.env[.properties]
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -14,3 +16,8 @@ spring:
         jdbc:
           time_zone: UTC
         format_sql: true
+
+dangcharge:
+  station-import:
+    enabled: ${STATION_IMPORT_ENABLED:false}
+    csv-path: ${STATION_IMPORT_CSV_PATH:data/ev_charge_stations.csv}
