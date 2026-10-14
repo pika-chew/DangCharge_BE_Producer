@@ -10,28 +10,13 @@ CREATE TABLE users (
     login_id VARCHAR(50) NOT NULL COMMENT '로그인 아이디',
     password_hash VARCHAR(255) NOT NULL COMMENT '비밀번호 해시',
     username VARCHAR(50) NOT NULL COMMENT '유저네임',
-    vehicle_number VARCHAR(20) NOT NULL COMMENT '차량번호',
+    vehicle_model VARCHAR(30) NOT NULL COMMENT '차종, 선택지 중 하나',
     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id),
-    CONSTRAINT uq_users_login_id UNIQUE (login_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE vehicles (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    user_id BIGINT UNSIGNED NOT NULL,
-    model VARCHAR(30) NOT NULL COMMENT '차종, 선택지 중 하나',
-    connector_type VARCHAR(50) NOT NULL COMMENT '충전 규격',
-    battery_capacity_kwh DECIMAL(8,2) NULL COMMENT '배터리 용량, 선택',
-    current_soc_percent DECIMAL(5,2) NULL COMMENT '현재 잔량 %, 선택',
-    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-    PRIMARY KEY (id),
-    KEY idx_vehicles_user (user_id),
-    CONSTRAINT fk_vehicles_user FOREIGN KEY (user_id) REFERENCES users (id),
-    CONSTRAINT chk_vehicles_model CHECK (
-        model IN ('SM3_ZE', 'RAY_EV', 'SOUL_EV', 'NISSAN_LEAF', 'IONIQ_EV', 'BMW_I3', 'SPARK_EV', 'BOLT_EV', 'TESLA')
-    ),
-    CONSTRAINT chk_vehicles_capacity CHECK (battery_capacity_kwh > 0),
-    CONSTRAINT chk_vehicles_soc CHECK (current_soc_percent BETWEEN 0 AND 100)
+    CONSTRAINT uq_users_login_id UNIQUE (login_id),
+    CONSTRAINT chk_users_vehicle_model CHECK (
+        vehicle_model IN ('SM3_ZE', 'RAY_EV', 'SOUL_EV', 'NISSAN_LEAF', 'IONIQ_EV', 'BMW_I3', 'SPARK_EV', 'BOLT_EV', 'TESLA')
+    )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE stations (
@@ -57,7 +42,7 @@ CREATE TABLE stations (
 -- 충전소에서 충전할 수 있는 차종. 한전 설치현황의 carType을 차종별 행으로 풀어 저장한다.
 CREATE TABLE station_supported_models (
     station_id BIGINT UNSIGNED NOT NULL,
-    vehicle_model VARCHAR(30) NOT NULL COMMENT '충전 가능 차종, vehicles.model과 같은 값',
+    vehicle_model VARCHAR(30) NOT NULL COMMENT '충전 가능 차종, users.vehicle_model과 같은 값',
     PRIMARY KEY (station_id, vehicle_model),
     KEY idx_station_models_model (vehicle_model),
     CONSTRAINT fk_station_models_station FOREIGN KEY (station_id) REFERENCES stations (id),
@@ -90,7 +75,6 @@ CREATE TABLE chargers (
 CREATE TABLE reservations (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     user_id BIGINT UNSIGNED NOT NULL,
-    vehicle_id BIGINT UNSIGNED NOT NULL,
     charger_id BIGINT UNSIGNED NOT NULL,
     starts_at DATETIME(6) NOT NULL COMMENT '예약 시작, UTC',
     ends_at DATETIME(6) NOT NULL COMMENT '예약 종료, UTC',
@@ -100,10 +84,8 @@ CREATE TABLE reservations (
     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id),
     KEY idx_reservations_user_starts (user_id, starts_at),
-    KEY idx_reservations_vehicle (vehicle_id),
     KEY idx_reservations_charger_status_time (charger_id, status, starts_at, ends_at),
     CONSTRAINT fk_reservations_user FOREIGN KEY (user_id) REFERENCES users (id),
-    CONSTRAINT fk_reservations_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles (id),
     CONSTRAINT fk_reservations_charger FOREIGN KEY (charger_id) REFERENCES chargers (id),
     CONSTRAINT chk_reservations_time CHECK (ends_at > starts_at),
     CONSTRAINT chk_reservations_fee CHECK (estimated_fee >= 0),
@@ -113,11 +95,11 @@ CREATE TABLE reservations (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 애플리케이션에서 추가로 보장할 조건:
--- 1. 예약의 user_id가 vehicles.user_id와 일치하는지 확인합니다.
--- 2. 동일 충전구의 유효 예약 시간이 겹치지 않도록 동시 요청도 제어합니다.
+-- 1. 동일 충전구의 유효 예약 시간이 겹치지 않도록 동시 요청도 제어합니다.
 --    예: 트랜잭션에서 해당 chargers 행을 SELECT ... FOR UPDATE로 잠근 뒤,
 --    CONFIRMED 예약 중 starts_at < 새 ends_at AND ends_at > 새 starts_at을 조회합니다.
 --    중복이 없을 때 INSERT 후 COMMIT합니다. 모든 예약 생성/시간 변경 경로에 적용합니다.
--- 3. 차량과 충전구의 규격 호환성 및 충전구 운영 상태를 확인합니다.
--- 4. 설치현황 엑셀은 개별 충전구 ID/규격/출력을 제공하지 않습니다.
+-- 2. 예약자의 차종(users.vehicle_model)을 충전소가 지원하는지(station_supported_models),
+--    충전구가 운영 중인지 확인합니다.
+-- 3. 설치현황은 개별 충전구 ID/규격/출력을 제공하지 않습니다.
 --    가상 충전구를 생성할 경우 data_source = 'SIMULATION'으로 저장합니다.
