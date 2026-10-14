@@ -1,6 +1,5 @@
 package com.picka_chew.dangcharge.domain.reservation.validator;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 
@@ -23,12 +22,9 @@ public class ReservationValidatorImpl implements ReservationValidator {
 	private final ReservationAdaptor reservationAdaptor;
 
 	@Override
-	public void validateTimeRange(Instant startsAt, Instant endsAt, Instant now) {
+	public void validateStartTime(Instant startsAt, Instant now) {
 		boolean valid = startsAt.isAfter(now)
-				&& endsAt.isAfter(startsAt)
 				&& ReservationTimePolicy.isSlotAligned(startsAt)
-				&& ReservationTimePolicy.isSlotAligned(endsAt)
-				&& Duration.between(startsAt, endsAt).compareTo(ReservationTimePolicy.MAX_DURATION) <= 0
 				&& ReservationTimePolicy.isBookableDate(LocalDate.ofInstant(startsAt, ReservationTimePolicy.ZONE), now);
 		if (!valid) {
 			throw new GeneralException(ErrorStatus.INVALID_RESERVATION_TIME);

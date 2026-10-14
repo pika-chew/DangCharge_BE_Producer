@@ -9,8 +9,8 @@ import com.picka_chew.dangcharge.domain.vehicle.entity.VehicleModel;
 
 public interface ReservationValidator {
 
-	/** 미래 시각, 30분 단위, 최대 4시간, 오늘부터 7일 이내. 아니면 INVALID_RESERVATION_TIME */
-	void validateTimeRange(Instant startsAt, Instant endsAt, Instant now);
+	/** 미래 시각, 정각 또는 30분, 오늘부터 7일 이내. 아니면 INVALID_RESERVATION_TIME */
+	void validateStartTime(Instant startsAt, Instant now);
 
 	/** 충전소가 차종을 지원하지 않으면 VEHICLE_NOT_COMPATIBLE */
 	void validateVehicleCompatible(Station station, VehicleModel vehicleModel);

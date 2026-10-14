@@ -31,26 +31,20 @@ class ReservationValidatorImplTest {
 	ReservationValidatorImpl validator;
 
 	@Test
-	void acceptsFutureSlotAlignedRangeWithinLimits() {
-		assertThatCode(() -> validator.validateTimeRange(kst("2026-10-14T14:00"), kst("2026-10-14T18:00"), NOW))
-				.doesNotThrowAnyException();
-		assertThatCode(() -> validator.validateTimeRange(kst("2026-10-21T23:30"), kst("2026-10-22T00:00"), NOW))
-				.doesNotThrowAnyException();
+	void acceptsFutureStartOnHourOrHalfHourWithinSevenDays() {
+		assertThatCode(() -> validator.validateStartTime(kst("2026-10-14T10:30"), NOW)).doesNotThrowAnyException();
+		assertThatCode(() -> validator.validateStartTime(kst("2026-10-21T23:30"), NOW)).doesNotThrowAnyException();
 	}
 
-	@ParameterizedTest(name = "{2}")
+	@ParameterizedTest(name = "{1}")
 	@CsvSource({
-			"2026-10-14T09:30, 2026-10-14T10:30, 이미 지난 시작",
-			"2026-10-14T10:00, 2026-10-14T10:30, 지금 시작",
-			"2026-10-14T14:10, 2026-10-14T15:00, 30분 단위가 아닌 시작",
-			"2026-10-14T14:00, 2026-10-14T14:45, 30분 단위가 아닌 종료",
-			"2026-10-14T15:00, 2026-10-14T14:00, 종료가 시작보다 앞",
-			"2026-10-14T14:00, 2026-10-14T14:00, 길이 0",
-			"2026-10-14T14:00, 2026-10-14T18:30, 4시간 초과",
-			"2026-10-22T00:00, 2026-10-22T00:30, 7일 뒤 날짜"
+			"2026-10-14T09:30, 이미 지난 시작",
+			"2026-10-14T10:00, 지금 시작",
+			"2026-10-14T14:10, 정각이나 30분이 아닌 시작",
+			"2026-10-22T00:00, 7일 뒤 날짜"
 	})
-	void rejectsInvalidRange(String start, String end, String reason) {
-		assertThatThrownBy(() -> validator.validateTimeRange(kst(start), kst(end), NOW))
+	void rejectsInvalidStart(String start, String reason) {
+		assertThatThrownBy(() -> validator.validateStartTime(kst(start), NOW))
 				.isInstanceOf(GeneralException.class)
 				.extracting("errorStatus").isEqualTo(ErrorStatus.INVALID_RESERVATION_TIME);
 	}

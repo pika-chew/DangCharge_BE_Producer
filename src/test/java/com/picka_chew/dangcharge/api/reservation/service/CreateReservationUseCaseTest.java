@@ -48,7 +48,9 @@ class CreateReservationUseCaseTest {
 
 	private static final Instant NOW = Instant.parse("2026-10-14T01:00:00Z");
 	private static final CreateReservationRequest REQUEST = new CreateReservationRequest(10L,
-			OffsetDateTime.parse("2026-10-14T14:00:00+09:00"), OffsetDateTime.parse("2026-10-14T15:00:00+09:00"));
+			OffsetDateTime.parse("2026-10-14T14:00:00+09:00"));
+	private static final Instant STARTS_AT = Instant.parse("2026-10-14T05:00:00Z");
+	private static final Instant ENDS_AT = Instant.parse("2026-10-14T06:00:00Z");
 
 	@Mock
 	IdempotencyStore idempotencyStore;
@@ -84,19 +86,17 @@ class CreateReservationUseCaseTest {
 		given(userAdaptor.getByIdForUpdate(1L)).willReturn(user);
 		given(chargerAdaptor.getByIdForUpdate(10L)).willReturn(charger);
 		Reservation saved = reservation(55L);
-		given(reservationDomainService.create(user, charger, REQUEST.startAt().toInstant(), REQUEST.endAt().toInstant()))
-				.willReturn(saved);
+		given(reservationDomainService.create(user, charger, STARTS_AT, ENDS_AT)).willReturn(saved);
 
 		ReservationResponse response = useCase.execute(1L, REQUEST, null);
 
 		assertThat(response.reservationId()).isEqualTo(55L);
 		InOrder order = inOrder(reservationValidator, userAdaptor, chargerAdaptor, reservationDomainService, eventRecorder);
 		order.verify(userAdaptor).getByIdForUpdate(1L);
-		order.verify(reservationValidator).validateTimeRange(any(), any(), any());
+		order.verify(reservationValidator).validateStartTime(STARTS_AT, NOW);
 		order.verify(reservationValidator).validateNoActiveReservation(1L, NOW);
 		order.verify(chargerAdaptor).getByIdForUpdate(10L);
-		order.verify(reservationValidator).validateNoOverlap(10L, REQUEST.startAt().toInstant(),
-				REQUEST.endAt().toInstant());
+		order.verify(reservationValidator).validateNoOverlap(10L, STARTS_AT, ENDS_AT);
 		order.verify(reservationDomainService).create(any(), any(), any(), any());
 		order.verify(eventRecorder).record(any(ReservationEvent.class));
 		verifyNoInteractions(idempotencyStore);
@@ -151,7 +151,7 @@ class CreateReservationUseCaseTest {
 
 	private Reservation reservation(Long id) {
 		return Reservation.builder().id(id).user(user).charger(charger)
-				.startsAt(REQUEST.startAt().toInstant()).endsAt(REQUEST.endAt().toInstant()).build();
+				.startsAt(STARTS_AT).endsAt(ENDS_AT).build();
 	}
 
 }

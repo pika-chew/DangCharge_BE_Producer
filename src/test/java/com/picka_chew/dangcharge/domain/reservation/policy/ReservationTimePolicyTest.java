@@ -19,13 +19,15 @@ class ReservationTimePolicyTest {
 	private static final LocalDate DATE = LocalDate.of(2026, 10, 15);
 
 	@Test
-	void wholeDayIsFortyEightSlotsInKoreanTime() {
+	void everyHalfHourStartsOneHourReservationInKoreanTime() {
 		List<AvailableSlot> slots = ReservationTimePolicy.availableSlots(List.of(charger(1L, OperationalStatus.AVAILABLE)),
 				List.of(), DATE, kst("2026-10-14T10:00"));
 
 		assertThat(slots).hasSize(48);
 		assertThat(slots.get(0).startsAt()).isEqualTo(kst("2026-10-15T00:00"));
-		assertThat(slots.get(47).endsAt()).isEqualTo(kst("2026-10-16T00:00"));
+		assertThat(slots.get(0).endsAt()).isEqualTo(kst("2026-10-15T01:00"));
+		assertThat(slots.get(47).startsAt()).isEqualTo(kst("2026-10-15T23:30"));
+		assertThat(slots.get(47).endsAt()).isEqualTo(kst("2026-10-16T00:30"));
 	}
 
 	@Test
@@ -39,9 +41,11 @@ class ReservationTimePolicyTest {
 				List.of(reservation), DATE, kst("2026-10-15T11:10"));
 
 		assertThat(slots).allMatch(slot -> slot.chargerId().equals(1L));
+		// 12:00~13:00 예약이 있으면 11:30, 12:00, 12:30 시작은 겹친다
 		assertThat(slots).extracting(AvailableSlot::startsAt)
-				.doesNotContain(kst("2026-10-15T11:00"), kst("2026-10-15T12:00"), kst("2026-10-15T12:30"))
-				.contains(kst("2026-10-15T11:30"), kst("2026-10-15T13:00"));
+				.doesNotContain(kst("2026-10-15T11:00"), kst("2026-10-15T11:30"), kst("2026-10-15T12:00"),
+						kst("2026-10-15T12:30"))
+				.contains(kst("2026-10-15T13:00"));
 	}
 
 	@Test

@@ -38,7 +38,8 @@ public class ReservationApiController {
 
 	@Operation(summary = "예약 생성",
 			description = "사용자는 진행 중인 예약을 하나만 가질 수 있다. 이미 진행 중인 예약(예약, 충전중)이 있으면 새 예약을 만들지 않는다. "
-					+ "시작·종료는 30분 단위, 최대 4시간, 오늘부터 7일 이내다. "
+					+ "모든 예약은 1시간이다. 시작 시각만 보내면 종료 시각은 1시간 뒤로 정해진다. "
+					+ "시작은 정각 또는 30분, 오늘부터 7일 이내다. "
 					+ "Idempotency-Key 헤더를 보내면 같은 키의 재요청에는 처음 만든 예약을 돌려준다.")
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)

@@ -122,7 +122,7 @@ class ApiSecurityTest extends ControllerTestSupport {
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"chargerId": 1203,
-								"startAt": "2026-10-14T14:00:00+09:00", "endAt": "2026-10-14T15:00:00+09:00"}
+								"startAt": "2026-10-14T14:00:00+09:00"}
 								"""))
 				.andExpect(status().isConflict())
 				.andExpect(jsonPath("$.error.code").value("RESERVATION_CONFLICT"));
@@ -143,7 +143,7 @@ class ApiSecurityTest extends ControllerTestSupport {
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"chargerId": 1203,
-								"startAt": "2026-10-14T14:00:00+09:00", "endAt": "2026-10-14T15:00:00+09:00"}
+								"startAt": "2026-10-14T14:00:00+09:00"}
 								"""))
 				.andExpect(status().isCreated());
 		verify(createReservationUseCase).execute(eq(7L), any(), eq("key-1"));

@@ -90,7 +90,8 @@ public class StationApiController {
 	}
 
 	@Operation(summary = "날짜별 예약 가능 시간 슬롯",
-			description = "30분 단위 빈 슬롯을 충전기별로 내려준다. 내 차종을 지원하지 않는 충전소면 빈 목록이다. "
+			description = "충전기별로 예약할 수 있는 1시간 구간을 30분 간격 시작 시각으로 내려준다. "
+					+ "내 차종을 지원하지 않는 충전소면 빈 목록이다. "
 					+ "로그인이 필요하다.")
 	@GetMapping("/{stationId}/availability")
 	public ApiResponseDto<List<AvailableSlotResponse>> getAvailability(

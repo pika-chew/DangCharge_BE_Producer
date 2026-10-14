@@ -21,15 +21,20 @@ import com.picka_chew.dangcharge.domain.station.entity.Charger;
 public final class ReservationTimePolicy {
 
 	public static final ZoneId ZONE = TimeUtils.ZONE;
-	/** 예약 단위. 시작·종료 시각은 이 단위로 맞아야 한다 */
+	/** 예약 시작 시각 단위. 정각 또는 30분에 시작한다 */
 	public static final Duration SLOT = Duration.ofMinutes(30);
-	public static final Duration MAX_DURATION = Duration.ofHours(4);
+	/** 예약 한 건의 이용 시간. 사용자가 고르지 않고 시작 시각에서 서버가 종료 시각을 정한다 */
+	public static final Duration DURATION = Duration.ofHours(1);
 	/** 오늘부터 며칠 뒤까지 예약할 수 있는지 */
 	public static final int MAX_DAYS_AHEAD = 7;
 	/** 시작 몇 분 전까지 취소할 수 있는지 */
 	public static final Duration CANCEL_DEADLINE = Duration.ofMinutes(10);
 
 	private ReservationTimePolicy() {
+	}
+
+	public static Instant endOf(Instant startsAt) {
+		return startsAt.plus(DURATION);
 	}
 
 	public static boolean isSlotAligned(Instant instant) {
@@ -48,9 +53,10 @@ public final class ReservationTimePolicy {
 	}
 
 	/**
-	 * 날짜의 슬롯 중 충전기별로 비어 있는 것. 이미 지난 슬롯과 쓸 수 없는 충전기는 뺀다.
+	 * 그날 시작할 수 있는 예약(30분 간격 시작, 1시간 이용) 중 충전기별로 비어 있는 것.
+	 * 이미 지난 시작 시각과 쓸 수 없는 충전기는 뺀다. 23:30 시작은 다음 날 00:30에 끝난다.
 	 *
-	 * @param reservations 그날과 겹치는 CONFIRMED 예약
+	 * @param reservations 그날 00:00부터 다음 날 01:00까지와 겹치는 CONFIRMED 예약
 	 */
 	public static List<AvailableSlot> availableSlots(Collection<Charger> chargers,
 			Collection<Reservation> reservations, LocalDate date, Instant now) {
@@ -62,7 +68,7 @@ public final class ReservationTimePolicy {
 				continue;
 			}
 			for (Instant start = dayStart; start.isBefore(dayEnd); start = start.plus(SLOT)) {
-				Instant end = start.plus(SLOT);
+				Instant end = endOf(start);
 				if (start.isBefore(now) || overlapsAny(charger.getId(), start, end, reservations)) {
 					continue;
 				}

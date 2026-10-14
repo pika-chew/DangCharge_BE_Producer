@@ -15,6 +15,7 @@ import com.picka_chew.dangcharge.common.exception.GeneralException;
 import com.picka_chew.dangcharge.domain.reservation.adaptor.ReservationAdaptor;
 import com.picka_chew.dangcharge.domain.reservation.entity.Reservation;
 import com.picka_chew.dangcharge.domain.reservation.event.ReservationEvent;
+import com.picka_chew.dangcharge.domain.reservation.policy.ReservationTimePolicy;
 import com.picka_chew.dangcharge.domain.reservation.service.ReservationDomainService;
 import com.picka_chew.dangcharge.domain.reservation.validator.ReservationValidator;
 import com.picka_chew.dangcharge.domain.station.adaptor.ChargerAdaptor;
@@ -52,7 +53,7 @@ public class CreateReservationUseCase {
 		}
 		Instant now = Instant.now(clock);
 		Instant startsAt = request.startAt().toInstant();
-		Instant endsAt = request.endAt().toInstant();
+		Instant endsAt = ReservationTimePolicy.endOf(startsAt);
 
 		User user = userAdaptor.getByIdForUpdate(userId);
 		if (idempotent) {
@@ -63,7 +64,7 @@ public class CreateReservationUseCase {
 			}
 		}
 
-		reservationValidator.validateTimeRange(startsAt, endsAt, now);
+		reservationValidator.validateStartTime(startsAt, now);
 		reservationValidator.validateNoActiveReservation(userId, now);
 		Charger charger = chargerAdaptor.getByIdForUpdate(request.chargerId());
 		reservationValidator.validateChargerUsable(charger);
