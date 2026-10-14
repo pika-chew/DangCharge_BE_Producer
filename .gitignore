@@ -39,5 +39,3 @@ out/
 # Local credentials and generated station data
 .env
 /data/
-__pycache__/
-*.py[cod]

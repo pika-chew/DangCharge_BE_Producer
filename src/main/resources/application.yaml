@@ -1,6 +1,9 @@
 spring:
   application:
     name: dangcharge
+  batch:
+    job:
+      enabled: false
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
