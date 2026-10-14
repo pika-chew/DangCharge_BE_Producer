@@ -1,3 +1,29 @@
 spring:
   application:
     name: dangcharge
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        format_sql: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+dangcharge:
+  station-import:
+    enabled: ${STATION_IMPORT_ENABLED:false}
+    csv-path: ${STATION_IMPORT_CSV_PATH:data/ev_charge_stations.csv}
