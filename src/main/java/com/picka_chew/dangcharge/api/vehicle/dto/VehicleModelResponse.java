@@ -1,6 +1,6 @@
 package com.picka_chew.dangcharge.api.vehicle.dto;
 
-import java.math.BigDecimal;
+import com.picka_chew.dangcharge.domain.vehicle.entity.VehicleModel;
 
-public record VehicleModelResponse(String manufacturer, String model, String connectorType, BigDecimal batteryCapacityKwh) {
+public record VehicleModelResponse(VehicleModel code, String label) {
 }

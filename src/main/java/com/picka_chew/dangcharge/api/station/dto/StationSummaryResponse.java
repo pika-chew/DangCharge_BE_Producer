@@ -1,4 +1,5 @@
 package com.picka_chew.dangcharge.api.station.dto;
 
-public record StationSummaryResponse(Long stationId, String name, String address) {
+public record StationSummaryResponse(Long stationId, String name, String address, String metro, String city,
+		int rapidCount, int slowCount) {
 }

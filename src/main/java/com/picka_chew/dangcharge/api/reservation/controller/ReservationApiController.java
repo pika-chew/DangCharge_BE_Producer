@@ -19,6 +19,7 @@ import com.picka_chew.dangcharge.api.reservation.dto.CreateReservationRequest;
 import com.picka_chew.dangcharge.api.reservation.dto.ReservationResponse;
 import com.picka_chew.dangcharge.common.exception.ErrorStatus;
 import com.picka_chew.dangcharge.common.exception.GeneralException;
+import com.picka_chew.dangcharge.domain.reservation.entity.ReservationStatus;
 
 /** 모든 API가 로그인을 요구한다 */
 @RestController
@@ -34,7 +35,8 @@ public class ReservationApiController {
 
 	/** 내 예약 목록 */
 	@GetMapping
-	public ApiResponseDto<List<ReservationResponse>> getReservations(@RequestParam(required = false) String status) {
+	public ApiResponseDto<List<ReservationResponse>> getReservations(
+			@RequestParam(required = false) ReservationStatus status) {
 		throw new GeneralException(ErrorStatus.NOT_IMPLEMENTED);
 	}
 

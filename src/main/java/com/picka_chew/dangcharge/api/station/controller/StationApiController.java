@@ -36,14 +36,12 @@ public class StationApiController {
 		throw new GeneralException(ErrorStatus.NOT_IMPLEMENTED);
 	}
 
-	/** 주소/이름 검색 */
+	/** 주소/이름 검색. 시도(metro)와 시군구(city)로 범위를 좁힐 수 있다 */
 	@GetMapping("/search")
 	public ApiResponseDto<List<StationSummaryResponse>> searchStations(
 			@RequestParam(required = false) String keyword,
-			@RequestParam(required = false) String region,
-			@RequestParam(required = false) String connectorType,
-			@RequestParam(required = false) BigDecimal minKw,
-			@RequestParam(defaultValue = "false") boolean availableOnly) {
+			@RequestParam(required = false) String metro,
+			@RequestParam(required = false) String city) {
 		throw new GeneralException(ErrorStatus.NOT_IMPLEMENTED);
 	}
 
