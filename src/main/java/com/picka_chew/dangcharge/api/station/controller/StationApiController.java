@@ -53,11 +53,10 @@ public class StationApiController {
 			@RequestParam BigDecimal lat,
 			@RequestParam BigDecimal lng,
 			@RequestParam BigDecimal radius,
-			@RequestParam(required = false) String connectorType,
 			@RequestParam(required = false) BigDecimal minKw,
 			@RequestParam(defaultValue = "false") boolean availableOnly) {
 		return ApiResponseDto.onSuccess(
-				getNearbyStationsUseCase.execute(lat, lng, radius, connectorType, minKw, availableOnly));
+				getNearbyStationsUseCase.execute(lat, lng, radius, minKw, availableOnly));
 	}
 
 	@Operation(summary = "주소/이름 검색",

@@ -41,12 +41,10 @@ public record StationUpsertedEvent(Long stationId, String name, String address, 
 		return "StationUpserted";
 	}
 
-	public record ChargerSnapshot(Long chargerId, ChargingType chargingType, String connectorType,
-			BigDecimal maxPowerKw, OperationalStatus status, ChargerDataSource dataSource) {
+	public record ChargerSnapshot(Long chargerId, ChargingType chargingType, BigDecimal maxPowerKw, OperationalStatus status, ChargerDataSource dataSource) {
 
 		static ChargerSnapshot of(Charger charger) {
-			return new ChargerSnapshot(charger.getId(), charger.getChargingType(), charger.getConnectorType(),
-					charger.getMaxPowerKw(), charger.getOperationalStatus(), charger.getDataSource());
+			return new ChargerSnapshot(charger.getId(), charger.getChargingType(), charger.getMaxPowerKw(), charger.getOperationalStatus(), charger.getDataSource());
 		}
 
 	}

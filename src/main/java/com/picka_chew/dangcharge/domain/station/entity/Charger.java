@@ -56,10 +56,6 @@ public class Charger {
 	@Column(name = "charging_type", nullable = false, length = 20)
 	private ChargingType chargingType;
 
-	/** 충전 규격. 없으면 null */
-	@Column(name = "connector_type", length = 50)
-	private String connectorType;
-
 	/** 최대 출력(kW). 없으면 null, 있으면 0보다 크다 */
 	@Column(name = "max_power_kw", precision = 8, scale = 2)
 	private BigDecimal maxPowerKw;

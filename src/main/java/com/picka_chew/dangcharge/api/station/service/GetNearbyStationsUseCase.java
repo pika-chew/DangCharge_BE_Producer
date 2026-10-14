@@ -40,7 +40,7 @@ public class GetNearbyStationsUseCase {
 
 	@Transactional(readOnly = true)
 	public List<StationMarkerResponse> execute(BigDecimal lat, BigDecimal lng, BigDecimal radius,
-			String connectorType, BigDecimal minKw, boolean availableOnly) {
+			BigDecimal minKw, boolean availableOnly) {
 		double latitude = lat.doubleValue();
 		double longitude = lng.doubleValue();
 		double radiusMeters = radius.doubleValue();
@@ -59,7 +59,7 @@ public class GetNearbyStationsUseCase {
 		Map<Long, List<Charger>> chargersByStation = chargerAdaptor.findAllByStationIds(
 						candidates.stream().map(Station::getId).toList()).stream()
 				.collect(Collectors.groupingBy(charger -> charger.getStation().getId()));
-		boolean filtersChargers = connectorType != null || minKw != null || availableOnly;
+		boolean filtersChargers = minKw != null || availableOnly;
 
 		List<StationMarkerResponse> markers = new ArrayList<>();
 		for (Station station : candidates) {
@@ -70,7 +70,7 @@ public class GetNearbyStationsUseCase {
 			}
 			List<Charger> chargers = chargersByStation.getOrDefault(station.getId(), List.of());
 			if (filtersChargers && chargers.stream()
-					.noneMatch(charger -> matches(charger, connectorType, minKw, availableOnly))) {
+					.noneMatch(charger -> matches(charger, minKw, availableOnly))) {
 				continue;
 			}
 			int available = (int) chargers.stream()
@@ -81,10 +81,7 @@ public class GetNearbyStationsUseCase {
 		return markers.size() > MAX_RESULTS ? markers.subList(0, MAX_RESULTS) : markers;
 	}
 
-	private static boolean matches(Charger charger, String connectorType, BigDecimal minKw, boolean availableOnly) {
-		if (connectorType != null && !connectorType.equalsIgnoreCase(charger.getConnectorType())) {
-			return false;
-		}
+	private static boolean matches(Charger charger, BigDecimal minKw, boolean availableOnly) {
 		if (minKw != null && (charger.getMaxPowerKw() == null || charger.getMaxPowerKw().compareTo(minKw) < 0)) {
 			return false;
 		}

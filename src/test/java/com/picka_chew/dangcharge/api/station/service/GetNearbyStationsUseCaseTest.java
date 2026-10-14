@@ -45,7 +45,7 @@ class GetNearbyStationsUseCaseTest {
 		given(chargerAdaptor.findAllByStationIds(anyList())).willReturn(List.of(
 				Charger.builder().id(10L).station(near).operationalStatus(OperationalStatus.AVAILABLE).build()));
 
-		List<StationMarkerResponse> markers = useCase.execute(LAT, LNG, new BigDecimal("1000"), null, null, false);
+		List<StationMarkerResponse> markers = useCase.execute(LAT, LNG, new BigDecimal("1000"), null, false);
 
 		assertThat(markers).extracting(StationMarkerResponse::stationId).containsExactly(2L, 1L);
 		assertThat(markers.get(0).availableChargerCount()).isEqualTo(1);
@@ -61,16 +61,16 @@ class GetNearbyStationsUseCaseTest {
 				Charger.builder().id(10L).station(withAvailable).operationalStatus(OperationalStatus.AVAILABLE).build(),
 				Charger.builder().id(11L).station(busy).operationalStatus(OperationalStatus.IN_USE).build()));
 
-		List<StationMarkerResponse> markers = useCase.execute(LAT, LNG, new BigDecimal("1000"), null, null, true);
+		List<StationMarkerResponse> markers = useCase.execute(LAT, LNG, new BigDecimal("1000"), null, true);
 
 		assertThat(markers).extracting(StationMarkerResponse::stationId).containsExactly(1L);
 	}
 
 	@Test
 	void rejectsRadiusOutOfRange() {
-		assertThatThrownBy(() -> useCase.execute(LAT, LNG, new BigDecimal("20001"), null, null, false))
+		assertThatThrownBy(() -> useCase.execute(LAT, LNG, new BigDecimal("20001"), null, false))
 				.extracting("errorStatus").isEqualTo(ErrorStatus.INVALID_RADIUS);
-		assertThatThrownBy(() -> useCase.execute(LAT, LNG, BigDecimal.ZERO, null, null, false))
+		assertThatThrownBy(() -> useCase.execute(LAT, LNG, BigDecimal.ZERO, null, false))
 				.extracting("errorStatus").isEqualTo(ErrorStatus.INVALID_RADIUS);
 	}
 

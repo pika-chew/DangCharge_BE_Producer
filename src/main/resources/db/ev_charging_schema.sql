@@ -56,7 +56,6 @@ CREATE TABLE chargers (
     station_id BIGINT UNSIGNED NOT NULL,
     external_id VARCHAR(100) NULL COMMENT '충전소 내 외부 ID, 선택',
     charging_type VARCHAR(20) NOT NULL COMMENT 'FAST: 급속, SLOW: 완속',
-    connector_type VARCHAR(50) NULL COMMENT '충전 규격, 선택',
     max_power_kw DECIMAL(8,2) NULL COMMENT '최대 출력, 선택',
     operational_status VARCHAR(30) NOT NULL DEFAULT 'UNKNOWN'
         COMMENT 'AVAILABLE, IN_USE, OUT_OF_SERVICE, UNKNOWN',
