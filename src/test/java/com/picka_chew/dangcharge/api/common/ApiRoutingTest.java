@@ -39,6 +39,9 @@ class ApiRoutingTest {
 			"GET,    /api/v1/reservations/1",
 			"DELETE, /api/v1/reservations/1",
 			"POST,   /api/v1/charging/1/stop",
+			"GET,    /api/v1/charging/history",
+			"GET,    /api/v1/charging/history?page=1&size=10",
+			"GET,    /api/v1/charging/history/1",
 			"POST,   /api/v1/admin/stations/sync"
 	})
 	void everySpecEndpointIsMapped(String method, String uri) throws Exception {
