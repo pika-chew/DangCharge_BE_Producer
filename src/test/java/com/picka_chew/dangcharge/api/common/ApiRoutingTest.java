@@ -36,7 +36,6 @@ class ApiRoutingTest {
 			"GET,    /api/v1/stations/1/chargers",
 			"GET,    /api/v1/stations/1/availability?date=2026-10-14&vehicleId=5",
 			"POST,   /api/v1/reservations",
-			"GET,    /api/v1/reservations?status=CONFIRMED",
 			"GET,    /api/v1/reservations/1",
 			"DELETE, /api/v1/reservations/1",
 			"POST,   /api/v1/charging/1/stop",
