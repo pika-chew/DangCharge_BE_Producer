@@ -9,7 +9,6 @@ import org.hibernate.type.SqlTypes;
 import com.picka_chew.dangcharge.domain.common.entity.BaseTimeEntity;
 import com.picka_chew.dangcharge.domain.station.entity.Charger;
 import com.picka_chew.dangcharge.domain.user.entity.User;
-import com.picka_chew.dangcharge.domain.vehicle.entity.Vehicle;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -34,9 +33,8 @@ import lombok.NoArgsConstructor;
 /**
  * 충전구 예약. 아래 조건은 DB 제약으로 막지 못하므로 예약을 만들거나 시간을 바꾸는 쪽에서 보장해야 한다.
  * <ul>
- * <li>예약한 사용자가 차량의 소유자와 같다.</li>
  * <li>같은 충전구의 CONFIRMED 예약끼리 시간이 겹치지 않는다. 동시 요청도 막아야 한다.</li>
- * <li>차량과 충전구의 충전 규격이 맞고, 충전구가 운영 중이다.</li>
+ * <li>예약한 사용자의 차종을 충전소가 지원하고, 충전구가 운영 중이다.</li>
  * </ul>
  */
 @Entity
@@ -47,7 +45,6 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(of = "id", callSuper = false)
 @Table(name = "reservations", indexes = {
 		@Index(name = "idx_reservations_user_starts", columnList = "user_id, starts_at"),
-		@Index(name = "idx_reservations_vehicle", columnList = "vehicle_id"),
 		@Index(name = "idx_reservations_charger_status_time", columnList = "charger_id, status, starts_at, ends_at")
 })
 public class Reservation extends BaseTimeEntity {
@@ -59,10 +56,6 @@ public class Reservation extends BaseTimeEntity {
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(name = "fk_reservations_user"))
 	private User user;
-
-	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "vehicle_id", nullable = false, foreignKey = @ForeignKey(name = "fk_reservations_vehicle"))
-	private Vehicle vehicle;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "charger_id", nullable = false, foreignKey = @ForeignKey(name = "fk_reservations_charger"))
