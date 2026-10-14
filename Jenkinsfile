@@ -60,7 +60,8 @@ pipeline {
     IMAGE_REPO     = "${REGISTRY}/pika-chew/dangcharge-${APP_NAME}"  // GHCR 이미지 이름은 소문자만 가능
     GITOPS_REPO    = 'github.com/pika-chew/DangCharge_GitOps.git'    // https:// 없이 작성
     GITOPS_BRANCH  = 'main'                                          // 일단은 main 브랜치로 push, 사람이 확인하는 단계를 두고 싶으면 PR 방식으로 변경 가능
-    GITOPS_FILE    = "apps/${APP_NAME}/deployment.yaml"              // 이미지 태그를 바꿀 매니페스트 (TODO: 매니페스트 만들면 경로 확인)
+    GITOPS_FILE    = 'manifests/workloads/command-api/kustomization.yaml'  // 이미지를 바꿀 Kustomize 파일
+    KUSTOMIZE_IMAGE = 'command-api'                                  // 그 파일 images 항목의 name
     GITHUB_CRED    = 'github-cred'
   }
 
@@ -208,10 +209,19 @@ pipeline {
               exit 0
             fi
 
-            # 매니페스트의 이미지 태그만 교체. image 줄 형식이 달라 못 찾으면 조용히 넘어가지 않고 실패
-            grep -q "image: ${IMAGE_REPO}:" "$GITOPS_FILE" \
-              || { echo "$GITOPS_FILE 에서 'image: ${IMAGE_REPO}:' 줄을 찾지 못함"; exit 1; }
-            sed -i "s|image: ${IMAGE_REPO}:.*|image: ${IMAGE_REPO}:${IMAGE_TAG}|" "$GITOPS_FILE"
+            # kustomization.yaml의 images 중 name이 KUSTOMIZE_IMAGE인 항목의 newName·newTag만 교체 (주석은 유지)
+            # 태그는 따옴표로 감싼다. 짧은 SHA가 숫자로만 되면 YAML이 숫자로 읽기 때문
+            # 항목이나 두 줄 중 하나라도 못 찾으면 조용히 넘어가지 않고 실패
+            awk -v name="$KUSTOMIZE_IMAGE" -v repo="$IMAGE_REPO" -v tag="$IMAGE_TAG" '
+              /^[^ #]/                              { in_images = /^images:/ }
+              in_images && /^ *- name:/             { target = ($0 ~ ("- name: *\\"?" name "\\"? *$")) }
+              in_images && target && /^ *newName:/  { sub(/newName:.*/, "newName: " repo); n++ }
+              in_images && target && /^ *newTag:/   { sub(/newTag:.*/, "newTag: \\"" tag "\\""); t++ }
+              { print }
+              END { if (n != 1 || t != 1) exit 1 }
+            ' "$GITOPS_FILE" > "$GITOPS_FILE.tmp" \
+              || { echo "$GITOPS_FILE 에서 images name '$KUSTOMIZE_IMAGE'의 newName/newTag를 찾지 못함"; exit 1; }
+            mv "$GITOPS_FILE.tmp" "$GITOPS_FILE"
 
             git config user.name  "jenkins-ci"
             git config user.email "jenkins-ci@users.noreply.github.com"
