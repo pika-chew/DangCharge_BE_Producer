@@ -1,9 +1,15 @@
 package com.picka_chew.dangcharge.domain.user.entity;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import com.picka_chew.dangcharge.domain.common.entity.BaseTimeEntity;
+import com.picka_chew.dangcharge.domain.vehicle.entity.VehicleModel;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -41,8 +47,10 @@ public class User extends BaseTimeEntity {
 	@Column(nullable = false, length = 50)
 	private String username;
 
-	/** 차량번호 */
-	@Column(name = "vehicle_number", nullable = false, length = 20)
-	private String vehicleNumber;
+	/** 차종. 정해진 선택지 중 하나이며 충전소의 지원 차종과 비교하는 기준이다 */
+	@Enumerated(EnumType.STRING)
+	@JdbcTypeCode(SqlTypes.VARCHAR)
+	@Column(name = "vehicle_model", nullable = false, length = 30)
+	private VehicleModel vehicleModel;
 
 }
