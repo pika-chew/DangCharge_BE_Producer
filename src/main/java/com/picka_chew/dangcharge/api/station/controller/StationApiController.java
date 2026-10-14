@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -65,8 +66,11 @@ public class StationApiController {
 	@SecurityRequirements
 	@GetMapping("/search")
 	public ApiResponseDto<List<StationSummaryResponse>> searchStations(
+			@Parameter(description = "충전소 이름·주소에 들어간 글자", example = "강남구청")
 			@RequestParam(required = false) String keyword,
+			@Parameter(description = "시도. 줄여 써도 된다", example = "서울특별시")
 			@RequestParam(required = false) String metro,
+			@Parameter(description = "시군구", example = "강남구")
 			@RequestParam(required = false) String city) {
 		return ApiResponseDto.onSuccess(searchStationsUseCase.execute(keyword, metro, city));
 	}
