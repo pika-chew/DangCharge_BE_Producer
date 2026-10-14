@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.picka_chew.dangcharge.api.charging.dto.ChargingSessionResponse;
 import com.picka_chew.dangcharge.api.common.dto.ApiResponseDto;
 import com.picka_chew.dangcharge.api.reservation.dto.CreateReservationRequest;
 import com.picka_chew.dangcharge.api.reservation.dto.ReservationResponse;
@@ -49,12 +48,6 @@ public class ReservationApiController {
 	/** 예약 취소 */
 	@DeleteMapping("/{reservationId}")
 	public ApiResponseDto<Void> cancelReservation(@PathVariable Long reservationId) {
-		throw new GeneralException(ErrorStatus.NOT_IMPLEMENTED);
-	}
-
-	/** 충전 시작. 충전 세션을 만든다 */
-	@PostMapping("/{reservationId}/check-in")
-	public ApiResponseDto<ChargingSessionResponse> checkIn(@PathVariable Long reservationId) {
 		throw new GeneralException(ErrorStatus.NOT_IMPLEMENTED);
 	}
 
