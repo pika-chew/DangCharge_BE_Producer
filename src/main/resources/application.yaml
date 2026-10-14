@@ -16,6 +16,8 @@ spring:
         jdbc:
           time_zone: UTC
         format_sql: true
+        # 목록에서 지원 차종 같은 지연 로딩 컬렉션을 충전소마다 따로 조회하지 않고 IN 쿼리 한 번으로 가져온다
+        default_batch_fetch_size: 100
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
