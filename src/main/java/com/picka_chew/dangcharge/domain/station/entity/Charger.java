@@ -72,4 +72,9 @@ public class Charger {
 	@Column(name = "data_source", nullable = false, length = 20)
 	private ChargerDataSource dataSource;
 
+	/** 고장·점검 중이 아니면 예약할 수 있다. 상태를 모르는 충전기(UNKNOWN)도 예약은 받는다 */
+	public boolean isUsable() {
+		return operationalStatus != OperationalStatus.OUT_OF_SERVICE;
+	}
+
 }

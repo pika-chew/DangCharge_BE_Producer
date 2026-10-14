@@ -53,4 +53,14 @@ public class User extends BaseTimeEntity {
 	@Column(name = "vehicle_model", nullable = false, length = 30)
 	private VehicleModel vehicleModel;
 
+	/** 프로필을 바꾼다. null인 값은 그대로 둔다 */
+	public void updateProfile(String username, VehicleModel vehicleModel) {
+		if (username != null) {
+			this.username = username;
+		}
+		if (vehicleModel != null) {
+			this.vehicleModel = vehicleModel;
+		}
+	}
+
 }

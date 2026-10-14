@@ -39,7 +39,8 @@ class StationDomainServiceImplTest {
 		StationSyncResult result = stationDomainService.syncAll(List.of(
 				snapshot("곡성지사", "전라남도 곡성군 1", 2, 0, VehicleModel.TESLA)));
 
-		assertThat(result).isEqualTo(new StationSyncResult(1, 0));
+		assertThat(result.created()).isEqualTo(1);
+		assertThat(result.updated()).isZero();
 		verify(stationRepository).saveAll(savedStations.capture());
 		Station saved = savedStations.getValue().get(0);
 		assertThat(saved.getName()).isEqualTo("곡성지사");
@@ -57,7 +58,8 @@ class StationDomainServiceImplTest {
 				snapshot("곡성지사", "전라남도 곡성군 1", 0, 2, VehicleModel.RAY_EV),
 				snapshot("곡성지사", "전라남도 곡성군 1", 2, 0, VehicleModel.TESLA)));
 
-		assertThat(result).isEqualTo(new StationSyncResult(1, 0));
+		assertThat(result.created()).isEqualTo(1);
+		assertThat(result.updated()).isZero();
 		verify(stationRepository).saveAll(savedStations.capture());
 		Station saved = savedStations.getValue().get(0);
 		assertThat(saved.getRapidCount()).isEqualTo(2);
@@ -77,12 +79,31 @@ class StationDomainServiceImplTest {
 		StationSyncResult result = stationDomainService.syncAll(List.of(
 				snapshot("곡성지사", "전라남도 곡성군 1", 3, 1, VehicleModel.TESLA)));
 
-		assertThat(result).isEqualTo(new StationSyncResult(0, 1));
+		assertThat(result.created()).isZero();
+		assertThat(result.updated()).isEqualTo(1);
+		assertThat(result.changedStations()).containsExactly(existing);
 		assertThat(existing.getRapidCount()).isEqualTo(3);
 		assertThat(existing.getSlowCount()).isEqualTo(1);
 		assertThat(existing.getSupportedModels()).containsExactly(VehicleModel.TESLA);
 		verify(stationRepository).saveAll(savedStations.capture());
 		assertThat(savedStations.getValue()).isEmpty();
+	}
+
+	@Test
+	void doesNotCountStationWhoseValuesAreUnchanged() {
+		Station existing = Station.builder()
+				.name("곡성지사").address("전라남도 곡성군 1").metro("전라남도").city("곡성군")
+				.rapidCount(3).slowCount(1)
+				.supportedModels(new HashSet<>(Set.of(VehicleModel.TESLA)))
+				.build();
+		given(stationRepository.findAllWithSupportedModels()).willReturn(List.of(existing));
+
+		StationSyncResult result = stationDomainService.syncAll(List.of(
+				snapshot("곡성지사", "전라남도 곡성군 1", 3, 1, VehicleModel.TESLA)));
+
+		assertThat(result.updated()).isZero();
+		assertThat(result.changedStations()).isEmpty();
+		assertThat(existing.getSyncedAt()).isNotNull();
 	}
 
 	private static StationSnapshot snapshot(String name, String address, int rapid, int slow, VehicleModel... models) {

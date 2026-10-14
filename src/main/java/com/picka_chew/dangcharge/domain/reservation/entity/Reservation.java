@@ -8,7 +8,10 @@ import org.hibernate.type.SqlTypes;
 
 import com.picka_chew.dangcharge.domain.common.entity.BaseTimeEntity;
 import com.picka_chew.dangcharge.domain.station.entity.Charger;
+import com.picka_chew.dangcharge.common.exception.ErrorStatus;
+import com.picka_chew.dangcharge.common.exception.GeneralException;
 import com.picka_chew.dangcharge.domain.user.entity.User;
+import com.picka_chew.dangcharge.domain.vehicle.entity.VehicleModel;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -78,5 +81,32 @@ public class Reservation extends BaseTimeEntity {
 	/** 예약 당시 예상 요금(원). 없으면 null, 있으면 0 이상 */
 	@Column(name = "estimated_fee", precision = 12, scale = 2)
 	private BigDecimal estimatedFee;
+
+	/** 예약 당시 사용자의 차종. 사용자가 나중에 차종을 바꿔도 충전 내역에는 이 값을 보여준다 */
+	@Enumerated(EnumType.STRING)
+	@JdbcTypeCode(SqlTypes.VARCHAR)
+	@Column(name = "vehicle_model", length = 30)
+	private VehicleModel vehicleModel;
+
+	/** 충전 완료(COMPLETED) 시각(UTC) */
+	@Column(name = "completed_at")
+	private Instant completedAt;
+
+	public void cancel() {
+		requireConfirmed();
+		this.status = ReservationStatus.CANCELLED;
+	}
+
+	public void complete(Instant completedAt) {
+		requireConfirmed();
+		this.status = ReservationStatus.COMPLETED;
+		this.completedAt = completedAt;
+	}
+
+	private void requireConfirmed() {
+		if (status != ReservationStatus.CONFIRMED) {
+			throw new GeneralException(ErrorStatus.INVALID_RESERVATION_STATUS);
+		}
+	}
 
 }

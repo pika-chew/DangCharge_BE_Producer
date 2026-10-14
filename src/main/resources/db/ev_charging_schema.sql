@@ -81,17 +81,36 @@ CREATE TABLE reservations (
     status VARCHAR(20) NOT NULL DEFAULT 'CONFIRMED'
         COMMENT 'CONFIRMED, CANCELLED, COMPLETED, NO_SHOW',
     estimated_fee DECIMAL(12,2) NULL COMMENT '예약 당시 예상 요금, 원, 선택',
+    vehicle_model VARCHAR(30) NULL COMMENT '예약 당시 사용자 차종',
+    completed_at DATETIME(6) NULL COMMENT '충전 완료 시각, UTC',
     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id),
     KEY idx_reservations_user_starts (user_id, starts_at),
     KEY idx_reservations_charger_status_time (charger_id, status, starts_at, ends_at),
+    KEY idx_reservations_user_status_completed (user_id, status, completed_at),
     CONSTRAINT fk_reservations_user FOREIGN KEY (user_id) REFERENCES users (id),
     CONSTRAINT fk_reservations_charger FOREIGN KEY (charger_id) REFERENCES chargers (id),
     CONSTRAINT chk_reservations_time CHECK (ends_at > starts_at),
     CONSTRAINT chk_reservations_fee CHECK (estimated_fee >= 0),
     CONSTRAINT chk_reservations_status CHECK (
         status IN ('CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW')
+    ),
+    CONSTRAINT chk_reservations_vehicle_model CHECK (
+        vehicle_model IN ('SM3_ZE', 'RAY_EV', 'SOUL_EV', 'NISSAN_LEAF', 'IONIQ_EV', 'BMW_I3', 'SPARK_EV', 'BOLT_EV', 'TESLA')
     )
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 도메인 이벤트 outbox. 비즈니스 데이터와 같은 트랜잭션에 쌓고, 따로 Kafka로 보낸 뒤 sent_at을 채운다.
+CREATE TABLE outbox_events (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    aggregate_type VARCHAR(50) NOT NULL COMMENT 'user, station, reservation',
+    aggregate_id BIGINT NOT NULL,
+    event_type VARCHAR(100) NOT NULL,
+    payload TEXT NOT NULL COMMENT '이벤트 스냅샷 JSON',
+    occurred_at DATETIME(6) NOT NULL,
+    sent_at DATETIME(6) NULL COMMENT 'Kafka 전송 완료 시각',
+    PRIMARY KEY (id),
+    KEY idx_outbox_unsent (sent_at, id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 애플리케이션에서 추가로 보장할 조건:

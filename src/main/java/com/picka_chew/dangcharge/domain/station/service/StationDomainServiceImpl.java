@@ -40,14 +40,15 @@ public class StationDomainServiceImpl implements StationDomainService {
 
 		Instant syncedAt = Instant.now();
 		List<Station> created = new ArrayList<>();
-		int updated = 0;
+		List<Station> updated = new ArrayList<>();
 		for (Map.Entry<StationKey, StationSnapshot> entry : merged.entrySet()) {
 			StationSnapshot snapshot = entry.getValue();
 			Station station = existing.get(entry.getKey());
 			if (station != null) {
-				station.sync(snapshot.metro(), snapshot.city(), snapshot.rapidCount(), snapshot.slowCount(),
-						snapshot.supportedModels(), syncedAt);
-				updated++;
+				if (station.sync(snapshot.metro(), snapshot.city(), snapshot.rapidCount(), snapshot.slowCount(),
+						snapshot.supportedModels(), syncedAt)) {
+					updated.add(station);
+				}
 				continue;
 			}
 			created.add(Station.builder()
@@ -62,7 +63,9 @@ public class StationDomainServiceImpl implements StationDomainService {
 					.build());
 		}
 		stationRepository.saveAll(created);
-		return new StationSyncResult(created.size(), updated);
+		List<Station> changed = new ArrayList<>(created);
+		changed.addAll(updated);
+		return new StationSyncResult(created.size(), updated.size(), changed);
 	}
 
 	/** 설치현황에 충전소 ID가 없어 이름과 주소로 같은 충전소인지 구분한다 */
