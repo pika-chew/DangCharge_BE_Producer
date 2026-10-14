@@ -75,7 +75,7 @@ public class StationApiController {
 		return ApiResponseDto.onSuccess(searchStationsUseCase.execute(keyword, metro, city));
 	}
 
-	@Operation(summary = "충전소 상세")
+	@Operation(summary = "충전소 상세", description = "충전소 정보와 소속 충전기 전체(타입·출력·상태)를 함께 내려준다.")
 	@SecurityRequirements
 	@GetMapping("/{stationId}")
 	public ApiResponseDto<StationDetailResponse> getStation(@PathVariable Long stationId) {
