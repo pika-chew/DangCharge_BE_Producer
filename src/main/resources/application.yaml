@@ -17,6 +17,12 @@ spring:
           time_zone: UTC
         format_sql: true
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
 dangcharge:
   station-import:
     enabled: ${STATION_IMPORT_ENABLED:false}
