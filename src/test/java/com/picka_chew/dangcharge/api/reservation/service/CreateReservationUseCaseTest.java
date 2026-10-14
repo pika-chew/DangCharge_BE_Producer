@@ -47,7 +47,7 @@ import com.picka_chew.dangcharge.domain.vehicle.entity.VehicleModel;
 class CreateReservationUseCaseTest {
 
 	private static final Instant NOW = Instant.parse("2026-10-14T01:00:00Z");
-	private static final CreateReservationRequest REQUEST = new CreateReservationRequest(10L, null,
+	private static final CreateReservationRequest REQUEST = new CreateReservationRequest(10L,
 			OffsetDateTime.parse("2026-10-14T14:00:00+09:00"), OffsetDateTime.parse("2026-10-14T15:00:00+09:00"));
 
 	@Mock

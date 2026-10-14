@@ -91,13 +91,12 @@ public class StationApiController {
 
 	@Operation(summary = "날짜별 예약 가능 시간 슬롯",
 			description = "30분 단위 빈 슬롯을 충전기별로 내려준다. 내 차종을 지원하지 않는 충전소면 빈 목록이다. "
-					+ "vehicleId는 차량 엔티티가 없어 쓰지 않는다. 로그인이 필요하다.")
+					+ "로그인이 필요하다.")
 	@GetMapping("/{stationId}/availability")
 	public ApiResponseDto<List<AvailableSlotResponse>> getAvailability(
 			@CurrentUser AuthUser authUser,
 			@PathVariable Long stationId,
-			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-			@RequestParam(required = false) Long vehicleId) {
+			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 		return ApiResponseDto.onSuccess(getAvailabilityUseCase.execute(authUser.userId(), stationId, date));
 	}
 

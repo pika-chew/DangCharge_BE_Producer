@@ -121,7 +121,7 @@ class ApiSecurityTest extends ControllerTestSupport {
 						.header(HttpHeaders.AUTHORIZATION, bearer(7L))
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
-								{"chargerId": 1203, "vehicleId": 5,
+								{"chargerId": 1203,
 								"startAt": "2026-10-14T14:00:00+09:00", "endAt": "2026-10-14T15:00:00+09:00"}
 								"""))
 				.andExpect(status().isConflict())
