@@ -18,15 +18,12 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.picka_chew.dangcharge.api.reservation.dto.CreateReservationRequest;
 import com.picka_chew.dangcharge.api.reservation.dto.ReservationResponse;
@@ -80,12 +77,6 @@ class CreateReservationUseCaseTest {
 		Station station = Station.builder().id(100L).name("강남 충전소")
 				.supportedModels(new HashSet<>(Set.of(VehicleModel.TESLA))).build();
 		charger = Charger.builder().id(10L).station(station).build();
-		TransactionSynchronizationManager.initSynchronization();
-	}
-
-	@AfterEach
-	void tearDown() {
-		TransactionSynchronizationManager.clearSynchronization();
 	}
 
 	@Test
@@ -100,8 +91,8 @@ class CreateReservationUseCaseTest {
 
 		assertThat(response.reservationId()).isEqualTo(55L);
 		InOrder order = inOrder(reservationValidator, userAdaptor, chargerAdaptor, reservationDomainService, eventRecorder);
-		order.verify(reservationValidator).validateTimeRange(any(), any(), any());
 		order.verify(userAdaptor).getByIdForUpdate(1L);
+		order.verify(reservationValidator).validateTimeRange(any(), any(), any());
 		order.verify(reservationValidator).validateNoActiveReservation(1L, NOW);
 		order.verify(chargerAdaptor).getByIdForUpdate(10L);
 		order.verify(reservationValidator).validateNoOverlap(10L, REQUEST.startAt().toInstant(),
@@ -125,53 +116,42 @@ class CreateReservationUseCaseTest {
 	}
 
 	@Test
-	void repeatedKeyReturnsReservationCreatedFirst() {
-		given(idempotencyStore.tryAcquire(1L, "key")).willReturn(false);
-		given(idempotencyStore.findCompletedReservationId(1L, "key")).willReturn(Optional.of(55L));
+	void repeatedKeyReturnsReservationCreatedFirstAfterLockingUser() {
+		given(userAdaptor.getByIdForUpdate(1L)).willReturn(user);
+		given(idempotencyStore.findReservationId(1L, "key")).willReturn(Optional.of(55L));
 		given(reservationAdaptor.getByIdAndUserId(55L, 1L)).willReturn(reservation(55L));
 
 		ReservationResponse response = useCase.execute(1L, REQUEST, "key");
 
 		assertThat(response.reservationId()).isEqualTo(55L);
-		verifyNoInteractions(reservationDomainService, eventRecorder);
+		InOrder order = inOrder(userAdaptor, idempotencyStore);
+		order.verify(userAdaptor).getByIdForUpdate(1L);
+		order.verify(idempotencyStore).findReservationId(1L, "key");
+		verifyNoInteractions(reservationValidator, chargerAdaptor, reservationDomainService, eventRecorder);
 	}
 
 	@Test
-	void keyStillBeingProcessedIsDuplicatedRequest() {
-		given(idempotencyStore.tryAcquire(1L, "key")).willReturn(false);
-		given(idempotencyStore.findCompletedReservationId(1L, "key")).willReturn(Optional.empty());
-
-		assertThatThrownBy(() -> useCase.execute(1L, REQUEST, "key"))
-				.extracting("errorStatus").isEqualTo(ErrorStatus.DUPLICATED_REQUEST);
-	}
-
-	@Test
-	void keyIsSavedOnCommitAndReleasedOnRollback() {
-		given(idempotencyStore.tryAcquire(1L, "key")).willReturn(true);
+	void newKeyIsSavedWithCreatedReservation() {
 		given(userAdaptor.getByIdForUpdate(1L)).willReturn(user);
+		given(idempotencyStore.findReservationId(1L, "key")).willReturn(Optional.empty());
 		given(chargerAdaptor.getByIdForUpdate(10L)).willReturn(charger);
 		given(reservationDomainService.create(any(), any(), any(), any())).willReturn(reservation(55L));
 
 		useCase.execute(1L, REQUEST, "key");
-		completeTransaction(TransactionSynchronization.STATUS_COMMITTED);
-		verify(idempotencyStore).complete(1L, "key", 55L);
 
-		TransactionSynchronizationManager.clearSynchronization();
-		TransactionSynchronizationManager.initSynchronization();
-		willThrow(new GeneralException(ErrorStatus.RESERVATION_CONFLICT))
-				.given(reservationValidator).validateNoOverlap(any(), any(), any());
-		assertThatThrownBy(() -> useCase.execute(1L, REQUEST, "key")).isInstanceOf(GeneralException.class);
-		completeTransaction(TransactionSynchronization.STATUS_ROLLED_BACK);
-		verify(idempotencyStore).release(1L, "key");
+		verify(idempotencyStore).save(1L, "key", 55L);
+	}
+
+	@Test
+	void tooLongKeyIsBadRequest() {
+		assertThatThrownBy(() -> useCase.execute(1L, REQUEST, "k".repeat(101)))
+				.extracting("errorStatus").isEqualTo(ErrorStatus.BAD_REQUEST);
+		verifyNoInteractions(userAdaptor);
 	}
 
 	private Reservation reservation(Long id) {
 		return Reservation.builder().id(id).user(user).charger(charger)
 				.startsAt(REQUEST.startAt().toInstant()).endsAt(REQUEST.endAt().toInstant()).build();
-	}
-
-	private static void completeTransaction(int status) {
-		TransactionSynchronizationManager.getSynchronizations().forEach(sync -> sync.afterCompletion(status));
 	}
 
 }

@@ -100,6 +100,35 @@ CREATE TABLE reservations (
     )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 사용자별 리프레시 토큰. 원문 대신 SHA-256 해시를 저장하고, 다시 로그인하면 덮어쓴다.
+CREATE TABLE refresh_tokens (
+    user_id BIGINT UNSIGNED NOT NULL,
+    token_hash CHAR(64) NOT NULL,
+    expires_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (user_id),
+    CONSTRAINT fk_refresh_tokens_user FOREIGN KEY (user_id) REFERENCES users (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 로그아웃으로 막은 액세스 토큰(jti). 토큰 만료 시각이 지나면 애플리케이션이 지운다.
+CREATE TABLE revoked_access_tokens (
+    token_id VARCHAR(36) NOT NULL COMMENT '액세스 토큰 jti',
+    expires_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (token_id),
+    KEY idx_revoked_access_tokens_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 예약 요청 Idempotency-Key. 예약과 같은 트랜잭션에 저장하고, 하루가 지나면 애플리케이션이 지운다.
+CREATE TABLE reservation_idempotency_keys (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    idempotency_key VARCHAR(100) NOT NULL,
+    reservation_id BIGINT NOT NULL,
+    created_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT uq_reservation_idempotency_user_key UNIQUE (user_id, idempotency_key),
+    KEY idx_reservation_idempotency_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- 도메인 이벤트 outbox. 비즈니스 데이터와 같은 트랜잭션에 쌓고, 따로 Kafka로 보낸 뒤 sent_at을 채운다.
 CREATE TABLE outbox_events (
     id BIGINT NOT NULL AUTO_INCREMENT,

@@ -4,6 +4,8 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.picka_chew.dangcharge.api.auth.port.AccessTokenBlacklist;
 import com.picka_chew.dangcharge.api.auth.port.RefreshTokenStore;
 import com.picka_chew.dangcharge.common.annotation.UseCase;
@@ -20,6 +22,7 @@ public class LogoutUseCase {
 	private final AccessTokenBlacklist accessTokenBlacklist;
 	private final Clock clock;
 
+	@Transactional
 	public void execute(AuthUser authUser) {
 		refreshTokenStore.delete(authUser.userId());
 		if (authUser.tokenId() != null && authUser.tokenExpiresAt() != null) {

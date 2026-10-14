@@ -6,8 +6,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-import java.util.Optional;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -34,7 +32,7 @@ class RefreshTokenUseCaseTest {
 	@Test
 	void issuesAccessTokenWhenStoredTokenMatches() {
 		given(tokenIssuer.verifyRefreshToken("refresh")).willReturn(1L);
-		given(refreshTokenStore.find(1L)).willReturn(Optional.of("refresh"));
+		given(refreshTokenStore.matches(1L, "refresh")).willReturn(true);
 		given(tokenIssuer.issueAccessToken(1L)).willReturn("access");
 
 		assertThat(useCase.execute("refresh").accessToken()).isEqualTo("access");
@@ -44,7 +42,7 @@ class RefreshTokenUseCaseTest {
 	@Test
 	void mismatchIsTreatedAsTheftAndRevokesStoredToken() {
 		given(tokenIssuer.verifyRefreshToken("old")).willReturn(1L);
-		given(refreshTokenStore.find(1L)).willReturn(Optional.of("current"));
+		given(refreshTokenStore.matches(1L, "old")).willReturn(false);
 
 		assertThatThrownBy(() -> useCase.execute("old"))
 				.extracting("errorStatus").isEqualTo(ErrorStatus.INVALID_REFRESH_TOKEN);

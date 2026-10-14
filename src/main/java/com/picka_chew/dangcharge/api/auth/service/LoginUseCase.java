@@ -25,7 +25,7 @@ public class LoginUseCase {
 	private final RefreshTokenStore refreshTokenStore;
 
 	/** 아이디가 없어도, 비밀번호가 틀려도 같은 오류(INVALID_CREDENTIALS)를 돌려준다 */
-	@Transactional(readOnly = true)
+	@Transactional
 	public TokenResponse execute(LoginRequest request) {
 		User user = userAdaptor.findByLoginId(request.loginId())
 				.orElseThrow(() -> new GeneralException(ErrorStatus.INVALID_CREDENTIALS));

@@ -24,11 +24,11 @@ public class RefreshTokenUseCase {
 	private final RefreshTokenStore refreshTokenStore;
 	private final UserAdaptor userAdaptor;
 
-	@Transactional(readOnly = true)
+	/** 불일치로 예외를 던져도 저장된 토큰 삭제는 커밋한다 */
+	@Transactional(noRollbackFor = GeneralException.class)
 	public AccessTokenResponse execute(String refreshToken) {
 		Long userId = tokenIssuer.verifyRefreshToken(refreshToken);
-		boolean matches = refreshTokenStore.find(userId).map(refreshToken::equals).orElse(false);
-		if (!matches) {
+		if (!refreshTokenStore.matches(userId, refreshToken)) {
 			refreshTokenStore.delete(userId);
 			throw new GeneralException(ErrorStatus.INVALID_REFRESH_TOKEN);
 		}

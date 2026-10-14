@@ -34,7 +34,7 @@ import com.picka_chew.dangcharge.security.config.SecurityConfig;
 import com.picka_chew.dangcharge.security.service.JwtTokenIssuer;
 
 /**
- * 컨트롤러 슬라이스 테스트 공통 설정. 실제 보안 설정과 JWT 발급기를 쓰고, UseCase와 Redis 포트는 목으로 바꾼다.
+ * 컨트롤러 슬라이스 테스트 공통 설정. 실제 보안 설정과 JWT 발급기를 쓰고, UseCase와 토큰 저장소 포트는 목으로 바꾼다.
  */
 @WebMvcTest
 @Import({SecurityConfig.class, JwtConfig.class, JwtTokenIssuer.class, TimeConfig.class})

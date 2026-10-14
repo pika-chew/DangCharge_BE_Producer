@@ -3,19 +3,15 @@ package com.picka_chew.dangcharge.api.reservation.port;
 import java.util.Optional;
 
 /**
- * Idempotency-Key로 같은 예약 요청이 두 번 처리되지 않게 한다.
- * 구현체: infra/redis/RedisIdempotencyStore
+ * Idempotency-Key로 같은 예약 요청이 두 번 처리되지 않게 한다. 예약과 같은 트랜잭션에서 저장하므로
+ * 예약이 롤백되면 키도 남지 않아 같은 키로 다시 시도할 수 있다.
+ * 구현체: infra/idempotency/JpaIdempotencyStore
  */
 public interface IdempotencyStore {
 
-	/** 키를 선점한다. 이미 누가 선점했으면 false */
-	boolean tryAcquire(Long userId, String key);
+	/** 이 키로 이미 만든 예약 ID */
+	Optional<Long> findReservationId(Long userId, String key);
 
-	/** 처리가 끝난 키면 만들어진 예약 ID, 처리 중이면 empty */
-	Optional<Long> findCompletedReservationId(Long userId, String key);
-
-	void complete(Long userId, String key, Long reservationId);
-
-	void release(Long userId, String key);
+	void save(Long userId, String key, Long reservationId);
 
 }
