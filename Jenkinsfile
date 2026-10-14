@@ -46,6 +46,10 @@ pipeline {
   environment {
     APP_NAME       = 'be-producer'      // 레포마다 다르게 (BE Consumer는 'be-consumer')
 
+    // Gradle 캐시 볼륨을 main과 나머지로 분리. PR 코드가 캐시에 남긴 init 스크립트 등이
+    // main 빌드(배포 이미지에 들어갈 JAR)에 섞이지 않도록 한다
+    GRADLE_CACHE   = "${env.BRANCH_NAME == 'main' ? 'ci-gradle-cache-main' : 'ci-gradle-cache-ci'}"
+
     // ===== 테스트용 MySQL (빌드마다 띄웠다가 지움, CI 전용이라 비밀번호는 비밀 아님) =====
     DB_USERNAME    = 'ci'
     DB_PASSWORD    = 'ci-password'
@@ -88,11 +92,11 @@ pipeline {
             || docker network inspect ci-net-mtu1450 >/dev/null
         '''
 
-        // Gradle 캐시 볼륨 (Gradle 배포판·의존성을 빌드마다 다시 받지 않도록 모든 빌드가 공유)
+        // Gradle 캐시 볼륨 (Gradle 배포판·의존성을 빌드마다 다시 받지 않도록 같은 볼륨을 쓰는 빌드끼리 공유)
         // 새 볼륨은 root 소유라 빌드 컨테이너(jenkins 사용자)가 쓸 수 있게 소유자를 맞춘다
         sh '''
-          docker volume create ci-gradle-cache >/dev/null
-          docker run --rm -u 0 -v ci-gradle-cache:/cache eclipse-temurin:17-jdk chown "$(id -u):$(id -g)" /cache
+          docker volume create "$GRADLE_CACHE" >/dev/null
+          docker run --rm -u 0 -v "$GRADLE_CACHE:/cache" eclipse-temurin:17-jdk chown "$(id -u):$(id -g)" /cache
         '''
       }
     }
@@ -101,7 +105,7 @@ pipeline {
     // 테스트할 때 쓸 임시 MySQL을 띄우는 단계
     stage('Test DB') {    
       when {
-        not { changeRequest target: 'main' }
+        not { changeRequest branch: 'develop', target: 'main' }   // 두 조건 모두 맞을 때만 = develop → main PR
       }
       steps {
         sh '''
@@ -131,14 +135,14 @@ pipeline {
       // develop → main PR은 건너뜀. 빌드는 성공으로 끝나므로 GitHub PR 체크는 통과 상태로 남는다
       when {
         beforeAgent true                         // 건너뛸 때는 빌드 컨테이너도 띄우지 않음
-        not { changeRequest target: 'main' }
+        not { changeRequest branch: 'develop', target: 'main' }   // 두 조건 모두 맞을 때만 = develop → main PR
       }
       agent {
         docker {
           image 'eclipse-temurin:17-jdk'   // Jenkins 서버에 JDK를 따로 설치하지 않아도 됨
           reuseNode true                   // 같은 workspace 사용 → 빌드 결과물(JAR)이 다음 단계로 이어짐
           // MTU 1450 네트워크(테스트 DB도 여기 있음) + Gradle 캐시 볼륨
-          args '--network ci-net-mtu1450 -v ci-gradle-cache:/gradle-cache'
+          args "--network ci-net-mtu1450 -v ${env.GRADLE_CACHE}:/gradle-cache"
         }
       }
       environment {
@@ -176,9 +180,12 @@ pipeline {
           sh '''
             # docker build는 사용자 정의 네트워크를 못 써서 host 네트워크(VM NIC MTU 그대로) 사용
             docker build --network host -t "$IMAGE_REPO:$IMAGE_TAG" .
+
+            # 로그인 정보는 이 빌드 전용 임시 디렉터리에만 저장하고, push 실패로 중간에 끝나도 지운다
+            export DOCKER_CONFIG="$(mktemp -d)"
+            trap 'rm -rf "$DOCKER_CONFIG"' EXIT
             echo "$GH_TOKEN" | docker login "$REGISTRY" -u "$GH_USER" --password-stdin
             docker push "$IMAGE_REPO:$IMAGE_TAG"
-            docker logout "$REGISTRY"
           '''
         }
       }
