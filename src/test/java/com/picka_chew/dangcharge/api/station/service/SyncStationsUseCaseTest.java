@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.picka_chew.dangcharge.api.station.port.StationDataReader;
 import com.picka_chew.dangcharge.common.event.DomainEventRecorder;
+import com.picka_chew.dangcharge.domain.station.adaptor.ChargerAdaptor;
 import com.picka_chew.dangcharge.domain.station.entity.Station;
 import com.picka_chew.dangcharge.domain.station.event.StationUpsertedEvent;
 import com.picka_chew.dangcharge.domain.station.model.StationSyncResult;
@@ -29,6 +30,8 @@ class SyncStationsUseCaseTest {
 	StationDataReader stationDataReader;
 	@Mock
 	StationDomainService stationDomainService;
+	@Mock
+	ChargerAdaptor chargerAdaptor;
 	@Mock
 	DomainEventRecorder eventRecorder;
 	@InjectMocks

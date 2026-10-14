@@ -16,9 +16,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.picka_chew.dangcharge.domain.station.entity.Charger;
+import com.picka_chew.dangcharge.domain.station.entity.ChargerDataSource;
+import com.picka_chew.dangcharge.domain.station.entity.ChargingType;
+import com.picka_chew.dangcharge.domain.station.entity.OperationalStatus;
 import com.picka_chew.dangcharge.domain.station.entity.Station;
 import com.picka_chew.dangcharge.domain.station.model.StationSnapshot;
 import com.picka_chew.dangcharge.domain.station.model.StationSyncResult;
+import com.picka_chew.dangcharge.domain.station.repository.ChargerRepository;
 import com.picka_chew.dangcharge.domain.station.repository.StationRepository;
 import com.picka_chew.dangcharge.domain.vehicle.entity.VehicleModel;
 
@@ -27,10 +32,14 @@ class StationDomainServiceImplTest {
 
 	@Mock
 	StationRepository stationRepository;
+	@Mock
+	ChargerRepository chargerRepository;
 	@InjectMocks
 	StationDomainServiceImpl stationDomainService;
 	@Captor
 	ArgumentCaptor<List<Station>> savedStations;
+	@Captor
+	ArgumentCaptor<List<Charger>> savedChargers;
 
 	@Test
 	void createsStationsThatDoNotExistYet() {
@@ -90,13 +99,18 @@ class StationDomainServiceImplTest {
 	}
 
 	@Test
-	void doesNotCountStationWhoseValuesAreUnchanged() {
-		Station existing = Station.builder()
+	void doesNotCountStationWhoseValuesAndChargersAreUnchanged() {
+		Station existing = Station.builder().id(1L)
 				.name("곡성지사").address("전라남도 곡성군 1").metro("전라남도").city("곡성군")
 				.rapidCount(3).slowCount(1)
 				.supportedModels(new HashSet<>(Set.of(VehicleModel.TESLA)))
 				.build();
 		given(stationRepository.findAllWithSupportedModels()).willReturn(List.of(existing));
+		given(chargerRepository.findAllByDataSource(ChargerDataSource.SIMULATION)).willReturn(List.of(
+				simulated(10L, existing, ChargingType.FAST, OperationalStatus.AVAILABLE),
+				simulated(11L, existing, ChargingType.FAST, OperationalStatus.IN_USE),
+				simulated(12L, existing, ChargingType.FAST, OperationalStatus.AVAILABLE),
+				simulated(13L, existing, ChargingType.SLOW, OperationalStatus.AVAILABLE)));
 
 		StationSyncResult result = stationDomainService.syncAll(List.of(
 				snapshot("곡성지사", "전라남도 곡성군 1", 3, 1, VehicleModel.TESLA)));
@@ -104,6 +118,57 @@ class StationDomainServiceImplTest {
 		assertThat(result.updated()).isZero();
 		assertThat(result.changedStations()).isEmpty();
 		assertThat(existing.getSyncedAt()).isNotNull();
+	}
+
+	@Test
+	void createsSimulatedChargersForEachRapidAndSlowCount() {
+		given(stationRepository.findAllWithSupportedModels()).willReturn(List.of());
+
+		StationSyncResult result = stationDomainService.syncAll(List.of(
+				snapshot("곡성지사", "전라남도 곡성군 1", 2, 1, VehicleModel.TESLA)));
+
+		verify(chargerRepository).saveAll(savedChargers.capture());
+		assertThat(savedChargers.getValue())
+				.extracting(Charger::getChargingType)
+				.containsExactly(ChargingType.FAST, ChargingType.FAST, ChargingType.SLOW);
+		assertThat(savedChargers.getValue()).allSatisfy(charger -> {
+			assertThat(charger.getDataSource()).isEqualTo(ChargerDataSource.SIMULATION);
+			assertThat(charger.getOperationalStatus()).isEqualTo(OperationalStatus.AVAILABLE);
+			assertThat(charger.getStation().getName()).isEqualTo("곡성지사");
+		});
+		assertThat(savedChargers.getValue().get(0).getMaxPowerKw()).isEqualByComparingTo("50");
+		assertThat(savedChargers.getValue().get(2).getMaxPowerKw()).isEqualByComparingTo("7");
+		assertThat(result.changedStations()).hasSize(1);
+	}
+
+	@Test
+	void fewerChargersTurnsExtraSimulatedChargersOutOfServiceInsteadOfDeleting() {
+		Station existing = Station.builder().id(1L)
+				.name("곡성지사").address("전라남도 곡성군 1").metro("전라남도").city("곡성군")
+				.rapidCount(3).slowCount(0)
+				.supportedModels(new HashSet<>(Set.of(VehicleModel.TESLA)))
+				.build();
+		Charger first = simulated(10L, existing, ChargingType.FAST, OperationalStatus.AVAILABLE);
+		Charger second = simulated(11L, existing, ChargingType.FAST, OperationalStatus.AVAILABLE);
+		Charger third = simulated(12L, existing, ChargingType.FAST, OperationalStatus.AVAILABLE);
+		given(stationRepository.findAllWithSupportedModels()).willReturn(List.of(existing));
+		given(chargerRepository.findAllByDataSource(ChargerDataSource.SIMULATION))
+				.willReturn(List.of(third, first, second));
+
+		StationSyncResult result = stationDomainService.syncAll(List.of(
+				snapshot("곡성지사", "전라남도 곡성군 1", 1, 0, VehicleModel.TESLA)));
+
+		assertThat(first.getOperationalStatus()).isEqualTo(OperationalStatus.AVAILABLE);
+		assertThat(second.getOperationalStatus()).isEqualTo(OperationalStatus.OUT_OF_SERVICE);
+		assertThat(third.getOperationalStatus()).isEqualTo(OperationalStatus.OUT_OF_SERVICE);
+		verify(chargerRepository).saveAll(savedChargers.capture());
+		assertThat(savedChargers.getValue()).isEmpty();
+		assertThat(result.changedStations()).containsExactly(existing);
+	}
+
+	private static Charger simulated(Long id, Station station, ChargingType type, OperationalStatus status) {
+		return Charger.builder().id(id).station(station).chargingType(type).operationalStatus(status)
+				.dataSource(ChargerDataSource.SIMULATION).build();
 	}
 
 	private static StationSnapshot snapshot(String name, String address, int rapid, int slow, VehicleModel... models) {
