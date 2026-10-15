@@ -36,6 +36,9 @@ import lombok.NoArgsConstructor;
 				columnNames = {"station_id", "external_id"}))
 public class Charger {
 
+	private static final BigDecimal SIMULATED_FAST_KW = new BigDecimal("50.00");
+	private static final BigDecimal SIMULATED_SLOW_KW = new BigDecimal("7.00");
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -53,10 +56,6 @@ public class Charger {
 	@Column(name = "charging_type", nullable = false, length = 20)
 	private ChargingType chargingType;
 
-	/** 충전 규격. 없으면 null */
-	@Column(name = "connector_type", length = 50)
-	private String connectorType;
-
 	/** 최대 출력(kW). 없으면 null, 있으면 0보다 크다 */
 	@Column(name = "max_power_kw", precision = 8, scale = 2)
 	private BigDecimal maxPowerKw;
@@ -71,5 +70,27 @@ public class Charger {
 	@JdbcTypeCode(SqlTypes.VARCHAR)
 	@Column(name = "data_source", nullable = false, length = 20)
 	private ChargerDataSource dataSource;
+
+	/**
+	 * 설치현황의 충전기 수만큼 만드는 가상 충전기. 개별 출력 정보가 없어 급속 50kW, 완속 7kW로 둔다.
+	 */
+	public static Charger simulated(Station station, ChargingType chargingType) {
+		return Charger.builder()
+				.station(station)
+				.chargingType(chargingType)
+				.maxPowerKw(chargingType == ChargingType.FAST ? SIMULATED_FAST_KW : SIMULATED_SLOW_KW)
+				.operationalStatus(OperationalStatus.AVAILABLE)
+				.dataSource(ChargerDataSource.SIMULATION)
+				.build();
+	}
+
+	public void changeOperationalStatus(OperationalStatus operationalStatus) {
+		this.operationalStatus = operationalStatus;
+	}
+
+	/** 고장·점검 중이 아니면 예약할 수 있다. 상태를 모르는 충전기(UNKNOWN)도 예약은 받는다 */
+	public boolean isUsable() {
+		return operationalStatus != OperationalStatus.OUT_OF_SERVICE;
+	}
 
 }

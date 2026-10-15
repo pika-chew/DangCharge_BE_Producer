@@ -2,13 +2,18 @@ package com.picka_chew.dangcharge.domain.reservation.entity;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import com.picka_chew.dangcharge.domain.common.entity.BaseTimeEntity;
 import com.picka_chew.dangcharge.domain.station.entity.Charger;
+import com.picka_chew.dangcharge.common.exception.ErrorStatus;
+import com.picka_chew.dangcharge.common.exception.GeneralException;
+import com.picka_chew.dangcharge.common.util.TimeUtils;
 import com.picka_chew.dangcharge.domain.user.entity.User;
+import com.picka_chew.dangcharge.domain.vehicle.entity.VehicleModel;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -49,6 +54,8 @@ import lombok.NoArgsConstructor;
 })
 public class Reservation extends BaseTimeEntity {
 
+	private static final DateTimeFormatter RESERVATION_NUMBER_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -78,5 +85,48 @@ public class Reservation extends BaseTimeEntity {
 	/** 예약 당시 예상 요금(원). 없으면 null, 있으면 0 이상 */
 	@Column(name = "estimated_fee", precision = 12, scale = 2)
 	private BigDecimal estimatedFee;
+
+	/** 예약 당시 사용자의 차종. 사용자가 나중에 차종을 바꿔도 충전 내역에는 이 값을 보여준다 */
+	@Enumerated(EnumType.STRING)
+	@JdbcTypeCode(SqlTypes.VARCHAR)
+	@Column(name = "vehicle_model", length = 30)
+	private VehicleModel vehicleModel;
+
+	/** 충전 시작(CHARGING) 시각(UTC) */
+	@Column(name = "charging_started_at")
+	private Instant chargingStartedAt;
+
+	/** 충전 완료(COMPLETED) 시각(UTC) */
+	@Column(name = "completed_at")
+	private Instant completedAt;
+
+	/** 사용자에게 보여주는 예약 번호. 예약일(한국 시간)과 ID로 만든다. 예: DC20261015-000001 */
+	public String getReservationNumber() {
+		Instant created = getCreatedAt() == null ? startsAt : getCreatedAt();
+		return "DC" + RESERVATION_NUMBER_DATE.format(created.atZone(TimeUtils.ZONE)) + "-" + String.format("%06d", id);
+	}
+
+	public void cancel() {
+		requireStatus(ReservationStatus.CONFIRMED);
+		this.status = ReservationStatus.CANCELLED;
+	}
+
+	public void startCharging(Instant startedAt) {
+		requireStatus(ReservationStatus.CONFIRMED);
+		this.status = ReservationStatus.CHARGING;
+		this.chargingStartedAt = startedAt;
+	}
+
+	public void complete(Instant completedAt) {
+		requireStatus(ReservationStatus.CHARGING);
+		this.status = ReservationStatus.COMPLETED;
+		this.completedAt = completedAt;
+	}
+
+	private void requireStatus(ReservationStatus expected) {
+		if (status != expected) {
+			throw new GeneralException(ErrorStatus.INVALID_RESERVATION_STATUS);
+		}
+	}
 
 }

@@ -12,7 +12,11 @@ public record ApiResponseDto<T>(boolean success, T data, Error error) {
 	}
 
 	public static ApiResponseDto<Void> onFailure(ErrorStatus errorStatus) {
-		return new ApiResponseDto<>(false, null, new Error(errorStatus.getCode(), errorStatus.getMessage()));
+		return onFailure(errorStatus.getCode(), errorStatus.getMessage());
+	}
+
+	public static ApiResponseDto<Void> onFailure(String code, String message) {
+		return new ApiResponseDto<>(false, null, new Error(code, message));
 	}
 
 	public record Error(String code, String message) {

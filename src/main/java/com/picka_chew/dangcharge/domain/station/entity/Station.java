@@ -110,9 +110,15 @@ public class Station {
 		return supportedModels.contains(model);
 	}
 
-	/** 외부 설치현황의 최신 값으로 덮어쓴다. 이름과 주소는 충전소를 구분하는 값이라 바꾸지 않는다 */
-	public void sync(String metro, String city, int rapidCount, int slowCount,
+	/**
+	 * 외부 설치현황의 최신 값으로 덮어쓴다. 이름과 주소는 충전소를 구분하는 값이라 바꾸지 않는다.
+	 *
+	 * @return 값이 하나라도 바뀌었으면 true. 동기화 시각만 바뀐 경우는 false다
+	 */
+	public boolean sync(String metro, String city, int rapidCount, int slowCount,
 			Collection<VehicleModel> supportedModels, Instant syncedAt) {
+		boolean changed = !this.metro.equals(metro) || !this.city.equals(city) || this.rapidCount != rapidCount
+				|| this.slowCount != slowCount || !this.supportedModels.equals(new HashSet<>(supportedModels));
 		this.metro = metro;
 		this.city = city;
 		this.rapidCount = rapidCount;
@@ -120,6 +126,7 @@ public class Station {
 		this.supportedModels.retainAll(supportedModels);
 		this.supportedModels.addAll(supportedModels);
 		this.syncedAt = syncedAt;
+		return changed;
 	}
 
 }

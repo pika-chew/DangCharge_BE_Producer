@@ -1,4 +1,6 @@
 package com.picka_chew.dangcharge.api.auth.dto;
 
-public record RefreshTokenRequest(String refreshToken) {
+import jakarta.validation.constraints.NotBlank;
+
+public record RefreshTokenRequest(@NotBlank String refreshToken) {
 }
