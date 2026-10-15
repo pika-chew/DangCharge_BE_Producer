@@ -5,6 +5,7 @@
 //   - 작업 브랜치 → develop PR : Test → Build
 //   - develop 머지             : Test → Build
 //   - develop → main PR        : 생략 (develop 머지 때 이미 검증한 코드라 바뀌는 게 없음)
+//                                체크아웃도 하지 않고 바로 성공, Slack 알림도 보내지 않음
 //   - main 머지                : Test → Build → Docker Build/Push → GitOps 업데이트
 //
 // [중요]
@@ -33,6 +34,12 @@ def notifySlack(String color, String text) {
   }
 }
 
+// develop → main PR 빌드인지. 이 PR은 바로 머지하는 경우가 많아서, 체크아웃을 하면
+// 머지 직후 GitHub이 PR 머지 ref를 지워 체크아웃이 실패하고 실패 알림이 간다
+def isReleasePr() {
+  return env.CHANGE_BRANCH == 'develop' && env.CHANGE_TARGET == 'main'
+}
+
 pipeline {
   agent any
 
@@ -41,6 +48,7 @@ pipeline {
     timeout(time: 30, unit: 'MINUTES')
     buildDiscarder(logRotator(numToKeepStr: '20'))
     timestamps()
+    skipDefaultCheckout()                        // 체크아웃은 Prepare에서 (develop → main PR은 체크아웃하지 않음)
   }
 
   environment {
@@ -66,8 +74,14 @@ pipeline {
   }
 
   stages {
+    // ---------- develop → main PR을 뺀 모든 이벤트에서 실행 ----------
     stage('Prepare') {
+      when {
+        not { changeRequest branch: 'develop', target: 'main' }   // 두 조건 모두 맞을 때만 = develop → main PR
+      }
       steps {
+        checkout scm
+
         script {
           // 이미지 태그 = 커밋 SHA 앞 7자리
           env.IMAGE_TAG = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
@@ -102,7 +116,6 @@ pipeline {
       }
     }
 
-    // ---------- develop → main PR을 뺀 모든 이벤트에서 실행 ----------
     // 테스트할 때 쓸 임시 MySQL을 띄우는 단계
     stage('Test DB') {    
       when {
@@ -251,13 +264,18 @@ pipeline {
     }
     fixed {
       script {
-        if (!(env.BRANCH_NAME in ['main', 'develop'])) {   // main·develop은 위 success에서 매번 알림
+        if (!(env.BRANCH_NAME in ['main', 'develop']) && !isReleasePr()) {   // main·develop은 위 success에서 매번 알림
           notifySlack('good', "✅ ${env.APP_NAME} CI 복구 (${env.BUILD_KIND})\n<${env.BUILD_URL}|빌드 #${env.BUILD_NUMBER}>")
         }
       }
     }
     failure {
-      notifySlack('danger', "❌ ${env.APP_NAME} CI 실패 (${env.BUILD_KIND})\n<${env.BUILD_URL}|빌드 #${env.BUILD_NUMBER}>")
+      script {
+        if (!isReleasePr()) {
+          // Prepare 전에 실패하면 BUILD_KIND가 없으므로 브랜치 이름으로 대신 표시
+          notifySlack('danger', "❌ ${env.APP_NAME} CI 실패 (${env.BUILD_KIND ?: env.BRANCH_NAME})\n<${env.BUILD_URL}|빌드 #${env.BUILD_NUMBER}>")
+        }
+      }
     }
     cleanup {
       sh '''
