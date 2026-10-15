@@ -32,7 +32,9 @@ public class AdminApiKeyFilter extends OncePerRequestFilter {
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
-		return !request.getRequestURI().startsWith(ADMIN_PATH_PREFIX);
+		// 요청 URI에는 context-path(/command 등)가 붙어 있어 떼고 비교한다
+		String path = request.getRequestURI().substring(request.getContextPath().length());
+		return !path.startsWith(ADMIN_PATH_PREFIX);
 	}
 
 	@Override
