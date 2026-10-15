@@ -16,14 +16,29 @@ import com.picka_chew.dangcharge.domain.reservation.entity.ReservationStatus;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
-	/** 시간이 겹치는 예약. 조건은 기존.시작 < 새.종료 AND 기존.종료 > 새.시작 */
-	boolean existsByChargerIdAndStatusAndStartsAtLessThanAndEndsAtGreaterThan(Long chargerId,
-			ReservationStatus status, Instant endsAt, Instant startsAt);
+	/** 시간이 겹치는 진행 중 예약. 조건은 기존.시작 < 새.종료 AND 기존.종료 > 새.시작 */
+	boolean existsByChargerIdAndStatusInAndStartsAtLessThanAndEndsAtGreaterThan(Long chargerId,
+			Collection<ReservationStatus> statuses, Instant endsAt, Instant startsAt);
 
-	boolean existsByUserIdAndStatusAndEndsAtGreaterThan(Long userId, ReservationStatus status, Instant now);
+	/** 진행 중인 예약: 아직 끝나지 않은 CONFIRMED, 또는 종료 시각과 관계없이 CHARGING */
+	@Query("""
+			select count(r) > 0 from Reservation r
+			where r.user.id = :userId
+			and (r.status = com.picka_chew.dangcharge.domain.reservation.entity.ReservationStatus.CHARGING
+				or (r.status = com.picka_chew.dangcharge.domain.reservation.entity.ReservationStatus.CONFIRMED
+					and r.endsAt > :now))
+			""")
+	boolean existsInProgressByUserId(@Param("userId") Long userId, @Param("now") Instant now);
 
-	Optional<Reservation> findFirstByUserIdAndStatusAndEndsAtGreaterThanOrderByStartsAtDesc(Long userId,
-			ReservationStatus status, Instant now);
+	@Query("""
+			select r from Reservation r
+			where r.user.id = :userId
+			and (r.status = com.picka_chew.dangcharge.domain.reservation.entity.ReservationStatus.CHARGING
+				or (r.status = com.picka_chew.dangcharge.domain.reservation.entity.ReservationStatus.CONFIRMED
+					and r.endsAt > :now))
+			order by r.startsAt desc
+			""")
+	List<Reservation> findInProgressByUserId(@Param("userId") Long userId, @Param("now") Instant now);
 
 	@Query("""
 			select r from Reservation r join fetch r.charger c join fetch c.station
@@ -31,8 +46,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 			""")
 	Optional<Reservation> findWithStationByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
 
-	List<Reservation> findAllByChargerIdInAndStatusAndStartsAtLessThanAndEndsAtGreaterThan(
-			Collection<Long> chargerIds, ReservationStatus status, Instant endsAt, Instant startsAt);
+	List<Reservation> findAllByChargerIdInAndStatusInAndStartsAtLessThanAndEndsAtGreaterThan(
+			Collection<Long> chargerIds, Collection<ReservationStatus> statuses, Instant endsAt, Instant startsAt);
 
 	@Query(value = """
 			select r from Reservation r join fetch r.charger c join fetch c.station

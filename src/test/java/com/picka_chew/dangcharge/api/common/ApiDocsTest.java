@@ -30,7 +30,7 @@ class ApiDocsTest extends ControllerTestSupport {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.info.title").value("DangCharge API"))
 				.andExpect(jsonPath("$.paths", hasKey("/api/v1/stations/{stationId}")))
-				.andExpect(jsonPath("$.paths", hasKey("/api/v1/charging/{sessionId}/stop")))
+				.andExpect(jsonPath("$.paths", hasKey("/api/v1/charging/{reservationId}/stop")))
 				.andExpect(jsonPath("$.paths['/api/v1/vehicle-models'].get.summary").value("차종 목록"))
 				.andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"));
 	}

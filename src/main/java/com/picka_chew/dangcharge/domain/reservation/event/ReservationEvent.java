@@ -8,10 +8,10 @@ import com.picka_chew.dangcharge.domain.reservation.entity.ReservationStatus;
 import com.picka_chew.dangcharge.domain.station.entity.Station;
 import com.picka_chew.dangcharge.domain.vehicle.entity.VehicleModel;
 
-/** 예약 생성·취소·충전 완료 이벤트. consumer가 조인 없이 화면을 그릴 수 있게 충전소 정보까지 담는다 */
+/** 예약 생성·취소·충전 시작·충전 완료 이벤트. consumer가 조인 없이 화면을 그릴 수 있게 충전소 정보까지 담는다 */
 public record ReservationEvent(String eventType, Long reservationId, Long userId, Long chargerId, Long stationId,
 		String stationName, String stationAddress, VehicleModel vehicleModel, Instant startsAt, Instant endsAt,
-		ReservationStatus status, Instant completedAt) implements DomainEvent {
+		ReservationStatus status, Instant chargingStartedAt, Instant completedAt) implements DomainEvent {
 
 	public static ReservationEvent created(Reservation reservation) {
 		return of("ReservationCreated", reservation);
@@ -19,6 +19,10 @@ public record ReservationEvent(String eventType, Long reservationId, Long userId
 
 	public static ReservationEvent canceled(Reservation reservation) {
 		return of("ReservationCanceled", reservation);
+	}
+
+	public static ReservationEvent chargingStarted(Reservation reservation) {
+		return of("ChargingStarted", reservation);
 	}
 
 	public static ReservationEvent completed(Reservation reservation) {
@@ -30,7 +34,7 @@ public record ReservationEvent(String eventType, Long reservationId, Long userId
 		return new ReservationEvent(eventType, reservation.getId(), reservation.getUser().getId(),
 				reservation.getCharger().getId(), station.getId(), station.getName(), station.getAddress(),
 				reservation.getVehicleModel(), reservation.getStartsAt(), reservation.getEndsAt(),
-				reservation.getStatus(), reservation.getCompletedAt());
+				reservation.getStatus(), reservation.getChargingStartedAt(), reservation.getCompletedAt());
 	}
 
 	@Override

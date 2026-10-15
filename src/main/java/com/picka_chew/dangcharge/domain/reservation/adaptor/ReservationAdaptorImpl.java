@@ -30,13 +30,6 @@ public class ReservationAdaptorImpl implements ReservationAdaptor {
 	}
 
 	@Override
-	public Reservation getActiveByIdAndUserId(Long reservationId, Long userId) {
-		return reservationRepository.findWithStationByIdAndUserId(reservationId, userId)
-				.filter(reservation -> reservation.getStatus() == ReservationStatus.CONFIRMED)
-				.orElseThrow(() -> new GeneralException(ErrorStatus.RESERVATION_NOT_FOUND));
-	}
-
-	@Override
 	public Reservation getCompletedByIdAndUserId(Long reservationId, Long userId) {
 		return reservationRepository.findWithStationByIdAndUserId(reservationId, userId)
 				.filter(reservation -> reservation.getStatus() == ReservationStatus.COMPLETED)
@@ -45,20 +38,18 @@ public class ReservationAdaptorImpl implements ReservationAdaptor {
 
 	@Override
 	public boolean existsOverlap(Long chargerId, Instant startsAt, Instant endsAt) {
-		return reservationRepository.existsByChargerIdAndStatusAndStartsAtLessThanAndEndsAtGreaterThan(
-				chargerId, ReservationStatus.CONFIRMED, endsAt, startsAt);
+		return reservationRepository.existsByChargerIdAndStatusInAndStartsAtLessThanAndEndsAtGreaterThan(
+				chargerId, ReservationStatus.IN_PROGRESS, endsAt, startsAt);
 	}
 
 	@Override
 	public boolean existsActiveByUserId(Long userId, Instant now) {
-		return reservationRepository.existsByUserIdAndStatusAndEndsAtGreaterThan(userId,
-				ReservationStatus.CONFIRMED, now);
+		return reservationRepository.existsInProgressByUserId(userId, now);
 	}
 
 	@Override
 	public Optional<Reservation> findActiveByUserId(Long userId, Instant now) {
-		return reservationRepository.findFirstByUserIdAndStatusAndEndsAtGreaterThanOrderByStartsAtDesc(userId,
-				ReservationStatus.CONFIRMED, now);
+		return reservationRepository.findInProgressByUserId(userId, now).stream().findFirst();
 	}
 
 	@Override
@@ -66,8 +57,8 @@ public class ReservationAdaptorImpl implements ReservationAdaptor {
 		if (chargerIds.isEmpty()) {
 			return List.of();
 		}
-		return reservationRepository.findAllByChargerIdInAndStatusAndStartsAtLessThanAndEndsAtGreaterThan(
-				chargerIds, ReservationStatus.CONFIRMED, to, from);
+		return reservationRepository.findAllByChargerIdInAndStatusInAndStartsAtLessThanAndEndsAtGreaterThan(
+				chargerIds, ReservationStatus.IN_PROGRESS, to, from);
 	}
 
 	@Override

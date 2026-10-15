@@ -15,8 +15,8 @@ public class GetChargingHistoryUseCase {
 	private final ReservationAdaptor reservationAdaptor;
 
 	@Transactional(readOnly = true)
-	public ChargingHistoryResponse execute(Long userId, Long sessionId) {
-		return ChargingHistoryResponse.from(reservationAdaptor.getCompletedByIdAndUserId(sessionId, userId));
+	public ChargingHistoryResponse execute(Long userId, Long reservationId) {
+		return ChargingHistoryResponse.from(reservationAdaptor.getCompletedByIdAndUserId(reservationId, userId));
 	}
 
 }

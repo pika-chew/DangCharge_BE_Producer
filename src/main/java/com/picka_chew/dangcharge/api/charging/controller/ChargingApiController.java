@@ -23,7 +23,6 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 
-/** 충전 세션 테이블이 없어 sessionId는 예약 ID다 */
 @Tag(name = "charging", description = "[충전] 충전 종료·충전 내역")
 @RestController
 @RequiredArgsConstructor
@@ -34,10 +33,10 @@ public class ChargingApiController {
 	private final GetChargingHistoriesUseCase getChargingHistoriesUseCase;
 	private final GetChargingHistoryUseCase getChargingHistoryUseCase;
 
-	@Operation(summary = "충전 종료", description = "예약을 COMPLETED로 바꾼다. sessionId는 예약 ID다. 예약 시작 이후에만 할 수 있다. 로그인이 필요하다.")
-	@PostMapping("/{sessionId}/stop")
-	public ApiResponseDto<Void> stopSession(@CurrentUser AuthUser authUser, @PathVariable Long sessionId) {
-		stopChargingUseCase.execute(authUser.userId(), sessionId);
+	@Operation(summary = "충전 종료", description = "충전중(CHARGING)인 예약을 완료(COMPLETED)로 바꾼다. 로그인이 필요하다.")
+	@PostMapping("/{reservationId}/stop")
+	public ApiResponseDto<Void> stopCharging(@CurrentUser AuthUser authUser, @PathVariable Long reservationId) {
+		stopChargingUseCase.execute(authUser.userId(), reservationId);
 		return ApiResponseDto.onSuccess(null);
 	}
 
@@ -50,11 +49,11 @@ public class ChargingApiController {
 		return ApiResponseDto.onSuccess(getChargingHistoriesUseCase.execute(authUser.userId(), page, size));
 	}
 
-	@Operation(summary = "충전 내역 상세", description = "sessionId는 예약 ID다. 로그인이 필요하다.")
-	@GetMapping("/history/{sessionId}")
+	@Operation(summary = "충전 내역 상세", description = "로그인이 필요하다.")
+	@GetMapping("/history/{reservationId}")
 	public ApiResponseDto<ChargingHistoryResponse> getHistoryDetail(@CurrentUser AuthUser authUser,
-			@PathVariable Long sessionId) {
-		return ApiResponseDto.onSuccess(getChargingHistoryUseCase.execute(authUser.userId(), sessionId));
+			@PathVariable Long reservationId) {
+		return ApiResponseDto.onSuccess(getChargingHistoryUseCase.execute(authUser.userId(), reservationId));
 	}
 
 }

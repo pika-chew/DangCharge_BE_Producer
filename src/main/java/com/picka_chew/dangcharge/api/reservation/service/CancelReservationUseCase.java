@@ -27,7 +27,7 @@ public class CancelReservationUseCase {
 
 	@Transactional
 	public void execute(Long userId, Long reservationId) {
-		Reservation reservation = reservationAdaptor.getActiveByIdAndUserId(reservationId, userId);
+		Reservation reservation = reservationAdaptor.getByIdAndUserId(reservationId, userId);
 		reservationValidator.validateCancelable(reservation, Instant.now(clock));
 		reservationDomainService.cancel(reservation);
 		eventRecorder.record(ReservationEvent.canceled(reservation));

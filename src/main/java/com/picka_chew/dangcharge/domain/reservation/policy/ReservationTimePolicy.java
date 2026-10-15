@@ -29,6 +29,10 @@ public final class ReservationTimePolicy {
 	public static final int MAX_DAYS_AHEAD = 7;
 	/** 시작 몇 분 전까지 취소할 수 있는지 */
 	public static final Duration CANCEL_DEADLINE = Duration.ofMinutes(10);
+	/** 예약 시작 몇 분 전부터 충전을 시작할 수 있는지 */
+	public static final Duration CHECK_IN_OPENS_BEFORE = Duration.ofMinutes(10);
+	/** 예약 시작 몇 분 후까지 충전을 시작할 수 있는지 */
+	public static final Duration CHECK_IN_CLOSES_AFTER = Duration.ofMinutes(15);
 
 	private ReservationTimePolicy() {
 	}

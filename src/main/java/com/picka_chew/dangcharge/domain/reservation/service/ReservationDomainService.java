@@ -13,6 +13,8 @@ public interface ReservationDomainService {
 
 	void cancel(Reservation reservation);
 
+	void startCharging(Reservation reservation, Instant startedAt);
+
 	void complete(Reservation reservation, Instant completedAt);
 
 }

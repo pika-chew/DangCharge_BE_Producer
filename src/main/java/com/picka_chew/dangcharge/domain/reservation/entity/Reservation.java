@@ -92,6 +92,10 @@ public class Reservation extends BaseTimeEntity {
 	@Column(name = "vehicle_model", length = 30)
 	private VehicleModel vehicleModel;
 
+	/** 충전 시작(CHARGING) 시각(UTC) */
+	@Column(name = "charging_started_at")
+	private Instant chargingStartedAt;
+
 	/** 충전 완료(COMPLETED) 시각(UTC) */
 	@Column(name = "completed_at")
 	private Instant completedAt;
@@ -103,18 +107,24 @@ public class Reservation extends BaseTimeEntity {
 	}
 
 	public void cancel() {
-		requireConfirmed();
+		requireStatus(ReservationStatus.CONFIRMED);
 		this.status = ReservationStatus.CANCELLED;
 	}
 
+	public void startCharging(Instant startedAt) {
+		requireStatus(ReservationStatus.CONFIRMED);
+		this.status = ReservationStatus.CHARGING;
+		this.chargingStartedAt = startedAt;
+	}
+
 	public void complete(Instant completedAt) {
-		requireConfirmed();
+		requireStatus(ReservationStatus.CHARGING);
 		this.status = ReservationStatus.COMPLETED;
 		this.completedAt = completedAt;
 	}
 
-	private void requireConfirmed() {
-		if (status != ReservationStatus.CONFIRMED) {
+	private void requireStatus(ReservationStatus expected) {
+		if (status != expected) {
 			throw new GeneralException(ErrorStatus.INVALID_RESERVATION_STATUS);
 		}
 	}

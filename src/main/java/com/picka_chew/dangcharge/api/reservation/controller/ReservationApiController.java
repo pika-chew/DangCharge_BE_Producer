@@ -19,6 +19,7 @@ import com.picka_chew.dangcharge.api.reservation.dto.CreateReservationRequest;
 import com.picka_chew.dangcharge.api.reservation.dto.MyReservationResponse;
 import com.picka_chew.dangcharge.api.reservation.dto.ReservationDetailResponse;
 import com.picka_chew.dangcharge.api.reservation.service.CancelReservationUseCase;
+import com.picka_chew.dangcharge.api.reservation.service.CheckInUseCase;
 import com.picka_chew.dangcharge.api.reservation.service.CreateReservationUseCase;
 import com.picka_chew.dangcharge.api.reservation.service.GetMyReservationUseCase;
 import com.picka_chew.dangcharge.api.reservation.service.GetReservationUseCase;
@@ -38,9 +39,10 @@ public class ReservationApiController {
 	private final GetMyReservationUseCase getMyReservationUseCase;
 	private final GetReservationUseCase getReservationUseCase;
 	private final CancelReservationUseCase cancelReservationUseCase;
+	private final CheckInUseCase checkInUseCase;
 
 	@Operation(summary = "예약 생성",
-			description = "사용자는 진행 중인 예약을 하나만 가질 수 있다. 이미 진행 중인 예약(예약, 충전중)이 있으면 새 예약을 만들지 않는다. "
+			description = "사용자는 진행 중인 예약(예약·충전중)을 하나만 가질 수 있다. 이미 진행 중인 예약(예약, 충전중)이 있으면 새 예약을 만들지 않는다. "
 					+ "모든 예약은 1시간이다. 시작 시각만 보내면 종료 시각은 1시간 뒤로 정해진다. "
 					+ "시작은 정각 또는 30분, 오늘부터 7일 이내다. "
 					+ "Idempotency-Key 헤더를 보내면 같은 키의 재요청에는 처음 만든 예약을 돌려준다.")
@@ -53,8 +55,8 @@ public class ReservationApiController {
 	}
 
 	@Operation(summary = "내 예약 확인하기",
-			description = "진행 중인 내 예약이 있는지와 ID, 시간, 충전소를 확인한다. 사용자당 진행 중인 예약은 하나라 ID 없이 조회한다. "
-					+ "예약이 없으면 hasReservation만 false다.")
+			description = "진행 중인 내 예약(예약·충전중)이 있는지와 ID, 시간, 충전소, 상태를 확인한다. "
+					+ "사용자당 진행 중인 예약은 하나라 ID 없이 조회한다. 예약이 없으면 hasReservation만 false다.")
 	@GetMapping("/me")
 	public ApiResponseDto<MyReservationResponse> getMyReservation(@CurrentUser AuthUser authUser) {
 		return ApiResponseDto.onSuccess(getMyReservationUseCase.execute(authUser.userId()));
@@ -68,7 +70,15 @@ public class ReservationApiController {
 		return ApiResponseDto.onSuccess(getReservationUseCase.execute(authUser.userId(), reservationId));
 	}
 
-	@Operation(summary = "예약 취소", description = "시작 10분 전까지만 취소할 수 있다.")
+	@Operation(summary = "충전 시작",
+			description = "예약(CONFIRMED)을 충전중(CHARGING)으로 바꾼다. 예약 시작 10분 전부터 시작 15분 후까지만 할 수 있다.")
+	@PostMapping("/{reservationId}/check-in")
+	public ApiResponseDto<ReservationDetailResponse> checkIn(@CurrentUser AuthUser authUser,
+			@PathVariable Long reservationId) {
+		return ApiResponseDto.onSuccess(checkInUseCase.execute(authUser.userId(), reservationId));
+	}
+
+	@Operation(summary = "예약 취소", description = "충전을 시작하기 전, 예약 시작 10분 전까지만 취소할 수 있다.")
 	@DeleteMapping("/{reservationId}")
 	public ApiResponseDto<Void> cancelReservation(@CurrentUser AuthUser authUser, @PathVariable Long reservationId) {
 		cancelReservationUseCase.execute(authUser.userId(), reservationId);

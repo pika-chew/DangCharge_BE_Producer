@@ -52,6 +52,7 @@ class ApiSecurityTest extends ControllerTestSupport {
 			"GET,    /api/v1/reservations/me",
 			"GET,    /api/v1/reservations/1",
 			"DELETE, /api/v1/reservations/1",
+			"POST,   /api/v1/reservations/1/check-in",
 			"POST,   /api/v1/charging/1/stop",
 			"GET,    /api/v1/charging/history",
 			"GET,    /api/v1/charging/history/1",

@@ -60,13 +60,26 @@ class ReservationValidatorImplTest {
 	}
 
 	@Test
-	void stopAllowedOnlyAfterStart() {
+	void chargingReservationCannotBeCancelled() {
+		Reservation reservation = Reservation.builder().startsAt(kst("2026-10-14T12:00")).build();
+		reservation.startCharging(NOW);
+
+		assertThatThrownBy(() -> validator.validateCancelable(reservation, NOW))
+				.extracting("errorStatus").isEqualTo(ErrorStatus.INVALID_RESERVATION_STATUS);
+	}
+
+	@Test
+	void checkInOpensTenMinutesBeforeAndClosesFifteenMinutesAfterStart() {
 		Reservation reservation = Reservation.builder().startsAt(kst("2026-10-14T10:30")).build();
 
-		assertThatThrownBy(() -> validator.validateStoppable(reservation, kst("2026-10-14T10:29")))
-				.extracting("errorStatus").isEqualTo(ErrorStatus.RESERVATION_NOT_STARTED);
-		assertThatCode(() -> validator.validateStoppable(reservation, kst("2026-10-14T10:30")))
+		assertThatThrownBy(() -> validator.validateCheckInWindow(reservation, kst("2026-10-14T10:19")))
+				.extracting("errorStatus").isEqualTo(ErrorStatus.CHECK_IN_NOT_ALLOWED);
+		assertThatCode(() -> validator.validateCheckInWindow(reservation, kst("2026-10-14T10:20")))
 				.doesNotThrowAnyException();
+		assertThatCode(() -> validator.validateCheckInWindow(reservation, kst("2026-10-14T10:45")))
+				.doesNotThrowAnyException();
+		assertThatThrownBy(() -> validator.validateCheckInWindow(reservation, kst("2026-10-14T10:46")))
+				.extracting("errorStatus").isEqualTo(ErrorStatus.CHECK_IN_NOT_ALLOWED);
 	}
 
 	static Instant kst(String localDateTime) {

@@ -11,12 +11,11 @@ import com.picka_chew.dangcharge.domain.reservation.adaptor.ReservationAdaptor;
 import com.picka_chew.dangcharge.domain.reservation.entity.Reservation;
 import com.picka_chew.dangcharge.domain.reservation.event.ReservationEvent;
 import com.picka_chew.dangcharge.domain.reservation.service.ReservationDomainService;
-import com.picka_chew.dangcharge.domain.reservation.validator.ReservationValidator;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * 충전 종료. 충전 세션 테이블이 없어 sessionId로 예약 ID를 받고, 예약을 COMPLETED로 바꾼다.
+ * 충전 종료. 충전중(CHARGING)인 예약을 완료(COMPLETED)로 바꾼다. 충전중이 아니면 INVALID_RESERVATION_STATUS.
  * 충전량·요금은 계산하지 않는다.
  */
 @UseCase
@@ -24,17 +23,14 @@ import lombok.RequiredArgsConstructor;
 public class StopChargingUseCase {
 
 	private final ReservationAdaptor reservationAdaptor;
-	private final ReservationValidator reservationValidator;
 	private final ReservationDomainService reservationDomainService;
 	private final DomainEventRecorder eventRecorder;
 	private final Clock clock;
 
 	@Transactional
-	public void execute(Long userId, Long sessionId) {
-		Instant now = Instant.now(clock);
-		Reservation reservation = reservationAdaptor.getActiveByIdAndUserId(sessionId, userId);
-		reservationValidator.validateStoppable(reservation, now);
-		reservationDomainService.complete(reservation, now);
+	public void execute(Long userId, Long reservationId) {
+		Reservation reservation = reservationAdaptor.getByIdAndUserId(reservationId, userId);
+		reservationDomainService.complete(reservation, Instant.now(clock));
 		eventRecorder.record(ReservationEvent.completed(reservation));
 	}
 

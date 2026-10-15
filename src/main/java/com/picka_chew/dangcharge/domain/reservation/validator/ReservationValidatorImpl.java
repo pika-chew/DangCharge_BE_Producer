@@ -8,6 +8,7 @@ import com.picka_chew.dangcharge.common.exception.ErrorStatus;
 import com.picka_chew.dangcharge.common.exception.GeneralException;
 import com.picka_chew.dangcharge.domain.reservation.adaptor.ReservationAdaptor;
 import com.picka_chew.dangcharge.domain.reservation.entity.Reservation;
+import com.picka_chew.dangcharge.domain.reservation.entity.ReservationStatus;
 import com.picka_chew.dangcharge.domain.reservation.policy.ReservationTimePolicy;
 import com.picka_chew.dangcharge.domain.station.entity.Charger;
 import com.picka_chew.dangcharge.domain.station.entity.Station;
@@ -61,15 +62,20 @@ public class ReservationValidatorImpl implements ReservationValidator {
 
 	@Override
 	public void validateCancelable(Reservation reservation, Instant now) {
+		if (reservation.getStatus() != ReservationStatus.CONFIRMED) {
+			throw new GeneralException(ErrorStatus.INVALID_RESERVATION_STATUS);
+		}
 		if (now.isAfter(reservation.getStartsAt().minus(ReservationTimePolicy.CANCEL_DEADLINE))) {
 			throw new GeneralException(ErrorStatus.RESERVATION_NOT_CANCELABLE);
 		}
 	}
 
 	@Override
-	public void validateStoppable(Reservation reservation, Instant now) {
-		if (now.isBefore(reservation.getStartsAt())) {
-			throw new GeneralException(ErrorStatus.RESERVATION_NOT_STARTED);
+	public void validateCheckInWindow(Reservation reservation, Instant now) {
+		Instant opens = reservation.getStartsAt().minus(ReservationTimePolicy.CHECK_IN_OPENS_BEFORE);
+		Instant closes = reservation.getStartsAt().plus(ReservationTimePolicy.CHECK_IN_CLOSES_AFTER);
+		if (now.isBefore(opens) || now.isAfter(closes)) {
+			throw new GeneralException(ErrorStatus.CHECK_IN_NOT_ALLOWED);
 		}
 	}
 

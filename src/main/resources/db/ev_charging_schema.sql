@@ -78,9 +78,10 @@ CREATE TABLE reservations (
     starts_at DATETIME(6) NOT NULL COMMENT '예약 시작, UTC',
     ends_at DATETIME(6) NOT NULL COMMENT '예약 종료, UTC',
     status VARCHAR(20) NOT NULL DEFAULT 'CONFIRMED'
-        COMMENT 'CONFIRMED, CANCELLED, COMPLETED, NO_SHOW',
+        COMMENT 'CONFIRMED, CHARGING, CANCELLED, COMPLETED, NO_SHOW',
     estimated_fee DECIMAL(12,2) NULL COMMENT '예약 당시 예상 요금, 원, 선택',
     vehicle_model VARCHAR(30) NULL COMMENT '예약 당시 사용자 차종',
+    charging_started_at DATETIME(6) NULL COMMENT '충전 시작 시각, UTC',
     completed_at DATETIME(6) NULL COMMENT '충전 완료 시각, UTC',
     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id),
@@ -92,7 +93,7 @@ CREATE TABLE reservations (
     CONSTRAINT chk_reservations_time CHECK (ends_at > starts_at),
     CONSTRAINT chk_reservations_fee CHECK (estimated_fee >= 0),
     CONSTRAINT chk_reservations_status CHECK (
-        status IN ('CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW')
+        status IN ('CONFIRMED', 'CHARGING', 'CANCELLED', 'COMPLETED', 'NO_SHOW')
     ),
     CONSTRAINT chk_reservations_vehicle_model CHECK (
         vehicle_model IN ('SM3_ZE', 'RAY_EV', 'SOUL_EV', 'NISSAN_LEAF', 'IONIQ_EV', 'BMW_I3', 'SPARK_EV', 'BOLT_EV', 'TESLA')

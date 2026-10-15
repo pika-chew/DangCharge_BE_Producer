@@ -34,6 +34,11 @@ public class ReservationDomainServiceImpl implements ReservationDomainService {
 	}
 
 	@Override
+	public void startCharging(Reservation reservation, Instant startedAt) {
+		reservation.startCharging(startedAt);
+	}
+
+	@Override
 	public void complete(Reservation reservation, Instant completedAt) {
 		reservation.complete(completedAt);
 	}
