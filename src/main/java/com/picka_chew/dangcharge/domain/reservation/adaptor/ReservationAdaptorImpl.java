@@ -3,6 +3,7 @@ package com.picka_chew.dangcharge.domain.reservation.adaptor;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -51,6 +52,12 @@ public class ReservationAdaptorImpl implements ReservationAdaptor {
 	@Override
 	public boolean existsActiveByUserId(Long userId, Instant now) {
 		return reservationRepository.existsByUserIdAndStatusAndEndsAtGreaterThan(userId,
+				ReservationStatus.CONFIRMED, now);
+	}
+
+	@Override
+	public Optional<Reservation> findActiveByUserId(Long userId, Instant now) {
+		return reservationRepository.findFirstByUserIdAndStatusAndEndsAtGreaterThanOrderByStartsAtDesc(userId,
 				ReservationStatus.CONFIRMED, now);
 	}
 

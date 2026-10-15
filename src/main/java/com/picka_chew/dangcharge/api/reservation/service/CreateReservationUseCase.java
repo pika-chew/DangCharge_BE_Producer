@@ -6,7 +6,7 @@ import java.time.Instant;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.picka_chew.dangcharge.api.reservation.dto.CreateReservationRequest;
-import com.picka_chew.dangcharge.api.reservation.dto.ReservationResponse;
+import com.picka_chew.dangcharge.api.reservation.dto.ReservationDetailResponse;
 import com.picka_chew.dangcharge.api.reservation.port.IdempotencyStore;
 import com.picka_chew.dangcharge.common.annotation.UseCase;
 import com.picka_chew.dangcharge.common.event.DomainEventRecorder;
@@ -46,7 +46,7 @@ public class CreateReservationUseCase {
 	private final Clock clock;
 
 	@Transactional
-	public ReservationResponse execute(Long userId, CreateReservationRequest request, String idempotencyKey) {
+	public ReservationDetailResponse execute(Long userId, CreateReservationRequest request, String idempotencyKey) {
 		boolean idempotent = idempotencyKey != null && !idempotencyKey.isBlank();
 		if (idempotent && idempotencyKey.length() > MAX_IDEMPOTENCY_KEY_LENGTH) {
 			throw new GeneralException(ErrorStatus.BAD_REQUEST);
@@ -60,7 +60,7 @@ public class CreateReservationUseCase {
 			// 사용자 행 락 뒤에 확인하므로 같은 키로 동시에 와도 두 번째 요청은 첫 요청이 끝난 뒤 그 결과를 본다
 			Long existingId = idempotencyStore.findReservationId(userId, idempotencyKey).orElse(null);
 			if (existingId != null) {
-				return ReservationResponse.from(reservationAdaptor.getByIdAndUserId(existingId, userId));
+				return ReservationDetailResponse.from(reservationAdaptor.getByIdAndUserId(existingId, userId));
 			}
 		}
 
@@ -76,7 +76,7 @@ public class CreateReservationUseCase {
 		if (idempotent) {
 			idempotencyStore.save(userId, idempotencyKey, reservation.getId());
 		}
-		return ReservationResponse.from(reservation);
+		return ReservationDetailResponse.from(reservation);
 	}
 
 }

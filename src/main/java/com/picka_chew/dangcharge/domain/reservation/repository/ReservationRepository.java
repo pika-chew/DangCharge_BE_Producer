@@ -22,6 +22,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
 	boolean existsByUserIdAndStatusAndEndsAtGreaterThan(Long userId, ReservationStatus status, Instant now);
 
+	Optional<Reservation> findFirstByUserIdAndStatusAndEndsAtGreaterThanOrderByStartsAtDesc(Long userId,
+			ReservationStatus status, Instant now);
+
 	@Query("""
 			select r from Reservation r join fetch r.charger c join fetch c.station
 			where r.id = :id and r.user.id = :userId

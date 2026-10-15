@@ -3,6 +3,7 @@ package com.picka_chew.dangcharge.domain.reservation.adaptor;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +25,9 @@ public interface ReservationAdaptor {
 
 	/** 아직 끝나지 않은 CONFIRMED 예약이 있는지 */
 	boolean existsActiveByUserId(Long userId, Instant now);
+
+	/** 아직 끝나지 않은 CONFIRMED 예약. 사용자당 하나다 */
+	Optional<Reservation> findActiveByUserId(Long userId, Instant now);
 
 	/** 주어진 충전기들의 CONFIRMED 예약 중 기간과 겹치는 것 */
 	List<Reservation> findConfirmedOverlapping(Collection<Long> chargerIds, Instant from, Instant to);

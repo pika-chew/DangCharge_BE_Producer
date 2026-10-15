@@ -16,9 +16,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import com.picka_chew.dangcharge.api.common.dto.ApiResponseDto;
 import com.picka_chew.dangcharge.api.reservation.dto.CreateReservationRequest;
-import com.picka_chew.dangcharge.api.reservation.dto.ReservationResponse;
+import com.picka_chew.dangcharge.api.reservation.dto.MyReservationResponse;
+import com.picka_chew.dangcharge.api.reservation.dto.ReservationDetailResponse;
 import com.picka_chew.dangcharge.api.reservation.service.CancelReservationUseCase;
 import com.picka_chew.dangcharge.api.reservation.service.CreateReservationUseCase;
+import com.picka_chew.dangcharge.api.reservation.service.GetMyReservationUseCase;
 import com.picka_chew.dangcharge.api.reservation.service.GetReservationUseCase;
 import com.picka_chew.dangcharge.common.annotation.CurrentUser;
 import com.picka_chew.dangcharge.security.dto.AuthUser;
@@ -33,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 public class ReservationApiController {
 
 	private final CreateReservationUseCase createReservationUseCase;
+	private final GetMyReservationUseCase getMyReservationUseCase;
 	private final GetReservationUseCase getReservationUseCase;
 	private final CancelReservationUseCase cancelReservationUseCase;
 
@@ -43,17 +46,25 @@ public class ReservationApiController {
 					+ "Idempotency-Key 헤더를 보내면 같은 키의 재요청에는 처음 만든 예약을 돌려준다.")
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public ApiResponseDto<ReservationResponse> createReservation(@CurrentUser AuthUser authUser,
+	public ApiResponseDto<ReservationDetailResponse> createReservation(@CurrentUser AuthUser authUser,
 			@RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
 			@Valid @RequestBody CreateReservationRequest request) {
 		return ApiResponseDto.onSuccess(createReservationUseCase.execute(authUser.userId(), request, idempotencyKey));
 	}
 
-	@Operation(summary = "예약 상세")
+	@Operation(summary = "내 예약 확인하기",
+			description = "진행 중인 내 예약이 있는지와 ID, 시간, 충전소를 확인한다. 사용자당 진행 중인 예약은 하나라 ID 없이 조회한다. "
+					+ "예약이 없으면 hasReservation만 false다.")
+	@GetMapping("/me")
+	public ApiResponseDto<MyReservationResponse> getMyReservation(@CurrentUser AuthUser authUser) {
+		return ApiResponseDto.onSuccess(getMyReservationUseCase.execute(authUser.userId()));
+	}
+
+	@Operation(summary = "예약 상세확인하기",
+			description = "예약 번호, 시간, 충전소, 예약 상태를 확인한다. 취소·완료된 예약도 내 예약이면 조회된다.")
 	@GetMapping("/{reservationId}")
-	public ApiResponseDto<ReservationResponse> getReservation(@CurrentUser AuthUser authUser,
+	public ApiResponseDto<ReservationDetailResponse> getReservation(@CurrentUser AuthUser authUser,
 			@PathVariable Long reservationId) {
-		// 조회 방식: 로그인 사용자의 현재 진행 중인 예약 내역을 조회한다. 진행 중은 예약, 충전중 두 상태다.
 		return ApiResponseDto.onSuccess(getReservationUseCase.execute(authUser.userId(), reservationId));
 	}
 

@@ -26,7 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.picka_chew.dangcharge.api.reservation.dto.CreateReservationRequest;
-import com.picka_chew.dangcharge.api.reservation.dto.ReservationResponse;
+import com.picka_chew.dangcharge.api.reservation.dto.ReservationDetailResponse;
 import com.picka_chew.dangcharge.api.reservation.port.IdempotencyStore;
 import com.picka_chew.dangcharge.common.event.DomainEventRecorder;
 import com.picka_chew.dangcharge.common.exception.ErrorStatus;
@@ -88,7 +88,7 @@ class CreateReservationUseCaseTest {
 		Reservation saved = reservation(55L);
 		given(reservationDomainService.create(user, charger, STARTS_AT, ENDS_AT)).willReturn(saved);
 
-		ReservationResponse response = useCase.execute(1L, REQUEST, null);
+		ReservationDetailResponse response = useCase.execute(1L, REQUEST, null);
 
 		assertThat(response.reservationId()).isEqualTo(55L);
 		InOrder order = inOrder(reservationValidator, userAdaptor, chargerAdaptor, reservationDomainService, eventRecorder);
@@ -121,7 +121,7 @@ class CreateReservationUseCaseTest {
 		given(idempotencyStore.findReservationId(1L, "key")).willReturn(Optional.of(55L));
 		given(reservationAdaptor.getByIdAndUserId(55L, 1L)).willReturn(reservation(55L));
 
-		ReservationResponse response = useCase.execute(1L, REQUEST, "key");
+		ReservationDetailResponse response = useCase.execute(1L, REQUEST, "key");
 
 		assertThat(response.reservationId()).isEqualTo(55L);
 		InOrder order = inOrder(userAdaptor, idempotencyStore);

@@ -23,6 +23,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 import com.picka_chew.dangcharge.api.admin.dto.StationSyncResponse;
+import com.picka_chew.dangcharge.api.reservation.dto.MyReservationResponse;
 import com.picka_chew.dangcharge.api.user.dto.UserResponse;
 import com.picka_chew.dangcharge.common.exception.ErrorStatus;
 import com.picka_chew.dangcharge.common.exception.GeneralException;
@@ -48,6 +49,7 @@ class ApiSecurityTest extends ControllerTestSupport {
 	@CsvSource({
 			"GET,    /api/v1/users/me",
 			"GET,    /api/v1/stations/1/availability?date=2026-10-14",
+			"GET,    /api/v1/reservations/me",
 			"GET,    /api/v1/reservations/1",
 			"DELETE, /api/v1/reservations/1",
 			"POST,   /api/v1/charging/1/stop",
@@ -155,6 +157,17 @@ class ApiSecurityTest extends ControllerTestSupport {
 				.andExpect(status().isOk());
 		verify(logoutUseCase).execute(org.mockito.ArgumentMatchers.argThat(user ->
 				user.userId().equals(7L) && user.tokenId() != null && user.tokenExpiresAt() != null));
+	}
+
+	@Test
+	void myReservationRouteIsNotTreatedAsReservationId() throws Exception {
+		given(getMyReservationUseCase.execute(7L)).willReturn(MyReservationResponse.none());
+
+		mockMvc.perform(get("/api/v1/reservations/me").header(HttpHeaders.AUTHORIZATION, bearer(7L)))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.hasReservation").value(false))
+				.andExpect(jsonPath("$.data.reservationId").doesNotExist());
+		verifyNoInteractions(getReservationUseCase);
 	}
 
 	@Test

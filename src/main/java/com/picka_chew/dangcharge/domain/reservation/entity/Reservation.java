@@ -2,6 +2,7 @@ package com.picka_chew.dangcharge.domain.reservation.entity;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -10,6 +11,7 @@ import com.picka_chew.dangcharge.domain.common.entity.BaseTimeEntity;
 import com.picka_chew.dangcharge.domain.station.entity.Charger;
 import com.picka_chew.dangcharge.common.exception.ErrorStatus;
 import com.picka_chew.dangcharge.common.exception.GeneralException;
+import com.picka_chew.dangcharge.common.util.TimeUtils;
 import com.picka_chew.dangcharge.domain.user.entity.User;
 import com.picka_chew.dangcharge.domain.vehicle.entity.VehicleModel;
 
@@ -52,6 +54,8 @@ import lombok.NoArgsConstructor;
 })
 public class Reservation extends BaseTimeEntity {
 
+	private static final DateTimeFormatter RESERVATION_NUMBER_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -91,6 +95,12 @@ public class Reservation extends BaseTimeEntity {
 	/** 충전 완료(COMPLETED) 시각(UTC) */
 	@Column(name = "completed_at")
 	private Instant completedAt;
+
+	/** 사용자에게 보여주는 예약 번호. 예약일(한국 시간)과 ID로 만든다. 예: DC20261015-000001 */
+	public String getReservationNumber() {
+		Instant created = getCreatedAt() == null ? startsAt : getCreatedAt();
+		return "DC" + RESERVATION_NUMBER_DATE.format(created.atZone(TimeUtils.ZONE)) + "-" + String.format("%06d", id);
+	}
 
 	public void cancel() {
 		requireConfirmed();

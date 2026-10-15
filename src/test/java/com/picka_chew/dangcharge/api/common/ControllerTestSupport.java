@@ -18,6 +18,7 @@ import com.picka_chew.dangcharge.api.charging.service.GetChargingHistoryUseCase;
 import com.picka_chew.dangcharge.api.charging.service.StopChargingUseCase;
 import com.picka_chew.dangcharge.api.reservation.service.CancelReservationUseCase;
 import com.picka_chew.dangcharge.api.reservation.service.CreateReservationUseCase;
+import com.picka_chew.dangcharge.api.reservation.service.GetMyReservationUseCase;
 import com.picka_chew.dangcharge.api.reservation.service.GetReservationUseCase;
 import com.picka_chew.dangcharge.api.station.service.GetAvailabilityUseCase;
 import com.picka_chew.dangcharge.api.station.service.GetChargersUseCase;
@@ -81,6 +82,8 @@ public abstract class ControllerTestSupport {
 	protected SyncStationsUseCase syncStationsUseCase;
 	@MockitoBean
 	protected CreateReservationUseCase createReservationUseCase;
+	@MockitoBean
+	protected GetMyReservationUseCase getMyReservationUseCase;
 	@MockitoBean
 	protected GetReservationUseCase getReservationUseCase;
 	@MockitoBean
