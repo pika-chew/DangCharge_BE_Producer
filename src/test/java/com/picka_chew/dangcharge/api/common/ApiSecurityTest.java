@@ -106,6 +106,17 @@ class ApiSecurityTest extends ControllerTestSupport {
 	}
 
 	@Test
+	void adminKeyWorksUnderContextPath() throws Exception {
+		given(syncStationsUseCase.execute()).willReturn(new StationSyncResult(0, 0, List.of()));
+
+		mockMvc.perform(post("/command/api/v1/admin/stations/sync").contextPath("/command")
+						.header("X-Admin-Key", ADMIN_KEY))
+				.andExpect(status().isOk());
+		mockMvc.perform(post("/command/api/v1/admin/stations/sync").contextPath("/command"))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
 	void invalidRequestBodyIsBadRequestInCommonFormat() throws Exception {
 		mockMvc.perform(post("/api/v1/auth/signup")
 						.contentType(MediaType.APPLICATION_JSON)

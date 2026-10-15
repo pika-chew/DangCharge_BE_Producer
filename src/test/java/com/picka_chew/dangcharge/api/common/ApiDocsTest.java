@@ -42,4 +42,15 @@ class ApiDocsTest extends ControllerTestSupport {
 				.andExpect(redirectedUrl("/swagger-ui/index.html"));
 	}
 
+	/** 인그레스가 /command를 떼지 않고 넘기면 앱은 context-path /command 아래에서 동작한다 */
+	@Test
+	void swaggerKeepsContextPathInRedirectAndApiDocsUrl() throws Exception {
+		mockMvc.perform(get("/command/swagger-ui.html").contextPath("/command"))
+				.andExpect(status().is3xxRedirection())
+				.andExpect(redirectedUrl("/command/swagger-ui/index.html"));
+		mockMvc.perform(get("/command/v3/api-docs/swagger-config").contextPath("/command"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.url").value("/command/v3/api-docs"));
+	}
+
 }
