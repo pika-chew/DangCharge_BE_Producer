@@ -166,8 +166,9 @@ class ApiSecurityTest extends ControllerTestSupport {
 
 		mockMvc.perform(get("/api/v1/reservations/me").header(HttpHeaders.AUTHORIZATION, bearer(7L)))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.data.hasReservation").value(false))
-				.andExpect(jsonPath("$.data.reservationId").doesNotExist());
+				.andExpect(jsonPath("$.data.state").value("NONE"))
+				.andExpect(jsonPath("$.data.message").value("진행 중인 예약이 없습니다"))
+				.andExpect(jsonPath("$.data.reservation").isEmpty());
 		verifyNoInteractions(getReservationUseCase);
 	}
 

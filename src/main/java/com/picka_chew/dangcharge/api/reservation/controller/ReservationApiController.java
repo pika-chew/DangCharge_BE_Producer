@@ -55,8 +55,9 @@ public class ReservationApiController {
 	}
 
 	@Operation(summary = "내 예약 확인하기",
-			description = "진행 중인 내 예약(예약·충전중)이 있는지와 ID, 시간, 충전소, 상태를 확인한다. "
-					+ "사용자당 진행 중인 예약은 하나라 ID 없이 조회한다. 예약이 없으면 hasReservation만 false다.")
+			description = "진행 중인 내 예약을 확인한다. 사용자당 진행 중인 예약은 하나라 ID 없이 조회한다. "
+					+ "state는 NONE(예약 없음), RESERVED(예약됨), CHARGING(충전중)이고 message는 화면에 띄울 문구다. "
+					+ "예약이 없어도 오류가 아니라 200이며 reservation이 null이다.")
 	@GetMapping("/me")
 	public ApiResponseDto<MyReservationResponse> getMyReservation(@CurrentUser AuthUser authUser) {
 		return ApiResponseDto.onSuccess(getMyReservationUseCase.execute(authUser.userId()));
