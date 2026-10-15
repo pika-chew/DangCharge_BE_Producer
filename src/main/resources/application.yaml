@@ -35,12 +35,9 @@ springdoc:
 
 dangcharge:
   jwt:
-    issuer: dangcharge
-    # RSA 키(PEM 또는 Base64). 비어 있으면 기동할 때마다 임시 키를 만든다
+    # RSA 키(PEM 또는 Base64). 비어 있으면 기동할 때마다 임시 키를 만든다. 유효기간은 액세스 30분, 리프레시 14일
     private-key: ${JWT_PRIVATE_KEY:}
     public-key: ${JWT_PUBLIC_KEY:}
-    access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:30m}
-    refresh-token-ttl: ${JWT_REFRESH_TOKEN_TTL:14d}
   admin:
     # 관리 API(X-Admin-Key) 키. 비어 있으면 관리 API를 아무도 호출할 수 없다
     api-key: ${ADMIN_API_KEY:}

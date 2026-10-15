@@ -9,6 +9,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @param privateKey PKCS#8 RSA 개인키(PEM 또는 Base64). 비어 있으면 기동할 때마다 임시 키를 만든다
  * @param publicKey X.509 RSA 공개키(PEM 또는 Base64)
+ * @param issuer 설정하지 않으면 dangcharge
+ * @param accessTokenTtl 설정하지 않으면 30분
+ * @param refreshTokenTtl 설정하지 않으면 14일
  */
 @ConfigurationProperties("dangcharge.jwt")
 public record JwtProperties(
