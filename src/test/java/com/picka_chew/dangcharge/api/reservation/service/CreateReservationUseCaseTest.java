@@ -82,7 +82,7 @@ class CreateReservationUseCaseTest {
 	}
 
 	@Test
-	void locksUserThenChargerBeforeCheckingOverlapAndRecordsEvent() {
+	void locksUserAndChargerBeforeAnyCheckAndRecordsEvent() {
 		given(userAdaptor.getByIdForUpdate(1L)).willReturn(user);
 		given(chargerAdaptor.getByIdForUpdate(10L)).willReturn(charger);
 		Reservation saved = reservation(55L);
@@ -93,9 +93,9 @@ class CreateReservationUseCaseTest {
 		assertThat(response.reservationId()).isEqualTo(55L);
 		InOrder order = inOrder(reservationValidator, userAdaptor, chargerAdaptor, reservationDomainService, eventRecorder);
 		order.verify(userAdaptor).getByIdForUpdate(1L);
+		order.verify(chargerAdaptor).getByIdForUpdate(10L);
 		order.verify(reservationValidator).validateStartTime(STARTS_AT, NOW);
 		order.verify(reservationValidator).validateNoActiveReservation(1L, NOW);
-		order.verify(chargerAdaptor).getByIdForUpdate(10L);
 		order.verify(reservationValidator).validateNoOverlap(10L, STARTS_AT, ENDS_AT);
 		order.verify(reservationDomainService).create(any(), any(), any(), any());
 		order.verify(eventRecorder).record(any(ReservationEvent.class));
@@ -116,18 +116,20 @@ class CreateReservationUseCaseTest {
 	}
 
 	@Test
-	void repeatedKeyReturnsReservationCreatedFirstAfterLockingUser() {
+	void repeatedKeyReturnsReservationCreatedFirstAfterLocking() {
 		given(userAdaptor.getByIdForUpdate(1L)).willReturn(user);
+		given(chargerAdaptor.getByIdForUpdate(10L)).willReturn(charger);
 		given(idempotencyStore.findReservationId(1L, "key")).willReturn(Optional.of(55L));
 		given(reservationAdaptor.getByIdAndUserId(55L, 1L)).willReturn(reservation(55L));
 
 		ReservationDetailResponse response = useCase.execute(1L, REQUEST, "key");
 
 		assertThat(response.reservationId()).isEqualTo(55L);
-		InOrder order = inOrder(userAdaptor, idempotencyStore);
+		InOrder order = inOrder(userAdaptor, chargerAdaptor, idempotencyStore);
 		order.verify(userAdaptor).getByIdForUpdate(1L);
+		order.verify(chargerAdaptor).getByIdForUpdate(10L);
 		order.verify(idempotencyStore).findReservationId(1L, "key");
-		verifyNoInteractions(reservationValidator, chargerAdaptor, reservationDomainService, eventRecorder);
+		verifyNoInteractions(reservationValidator, reservationDomainService, eventRecorder);
 	}
 
 	@Test
