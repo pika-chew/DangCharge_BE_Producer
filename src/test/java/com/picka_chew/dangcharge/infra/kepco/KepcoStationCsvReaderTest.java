@@ -67,7 +67,7 @@ class KepcoStationCsvReaderTest {
 
 		assertThatThrownBy(() -> new KepcoStationCsvReader(missing).read())
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessageContaining("scripts/get_ev_data.py");
+				.hasMessageContaining("충전소 CSV가 없습니다");
 	}
 
 	private Path write(String content) throws IOException {

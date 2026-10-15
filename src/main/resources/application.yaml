@@ -54,4 +54,5 @@ dangcharge:
     cron: ${STATION_SYNC_CRON:0 0 4 * * *}
   station-import:
     enabled: ${STATION_IMPORT_ENABLED:false}
-    csv-path: ${STATION_IMPORT_CSV_PATH:data/ev_charge_stations.csv}
+    # 기본은 JAR에 포함된 CSV. 다른 파일은 file:/경로 또는 일반 경로로 지정한다
+    csv-path: ${STATION_IMPORT_CSV_PATH:classpath:data/ev_charge_stations.csv}
