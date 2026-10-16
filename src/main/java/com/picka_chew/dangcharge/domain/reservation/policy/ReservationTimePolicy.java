@@ -11,7 +11,7 @@ import java.util.List;
 
 import com.picka_chew.dangcharge.common.util.TimeUtils;
 import com.picka_chew.dangcharge.domain.reservation.entity.Reservation;
-import com.picka_chew.dangcharge.domain.reservation.model.AvailableSlot;
+import com.picka_chew.dangcharge.domain.reservation.model.ReservationSlot;
 import com.picka_chew.dangcharge.domain.station.entity.Charger;
 
 /**
@@ -57,26 +57,27 @@ public final class ReservationTimePolicy {
 	}
 
 	/**
-	 * 그날 시작할 수 있는 예약(30분 간격 시작, 1시간 이용) 중 충전기별로 비어 있는 것.
+	 * 그날의 예약 시간대(30분 간격 시작, 1시간 이용)를 충전기별로 만들고, 진행 중인 예약과 겹치는지 표시한다.
 	 * 이미 지난 시작 시각과 쓸 수 없는 충전기는 뺀다. 23:30 시작은 다음 날 00:30에 끝난다.
 	 *
-	 * @param reservations 그날 00:00부터 다음 날 01:00까지와 겹치는 CONFIRMED 예약
+	 * @param reservations 그날 00:00부터 다음 날 01:00까지와 겹치는 진행 중 예약
 	 */
-	public static List<AvailableSlot> availableSlots(Collection<Charger> chargers,
+	public static List<ReservationSlot> slotsOf(Collection<Charger> chargers,
 			Collection<Reservation> reservations, LocalDate date, Instant now) {
 		Instant dayStart = startOfDay(date);
 		Instant dayEnd = startOfDay(date.plusDays(1));
-		List<AvailableSlot> slots = new ArrayList<>();
+		List<ReservationSlot> slots = new ArrayList<>();
 		for (Charger charger : chargers) {
 			if (!charger.isUsable()) {
 				continue;
 			}
 			for (Instant start = dayStart; start.isBefore(dayEnd); start = start.plus(SLOT)) {
 				Instant end = endOf(start);
-				if (start.isBefore(now) || overlapsAny(charger.getId(), start, end, reservations)) {
+				if (start.isBefore(now)) {
 					continue;
 				}
-				slots.add(new AvailableSlot(charger.getId(), start, end));
+				slots.add(new ReservationSlot(charger.getId(), start, end,
+						overlapsAny(charger.getId(), start, end, reservations)));
 			}
 		}
 		return slots;
