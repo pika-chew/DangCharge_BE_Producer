@@ -27,6 +27,24 @@ spring:
         # 브로커가 없을 때 전송이 오래 붙잡히지 않게 한다
         max.block.ms: 5000
 
+management:
+  endpoints:
+    web:
+      exposure:
+        # 헬스 체크만 연다. 다른 actuator 엔드포인트(env, beans 등)는 노출하지 않는다
+        include: health
+  endpoint:
+    health:
+      # k8s probe용 경로. k8s 밖(로컬, 도커)에서도 같은 경로를 쓰도록 항상 켠다
+      #   liveness:  /actuator/health/liveness  — 앱이 살아 있는지. 실패하면 파드 재시작
+      #   readiness: /actuator/health/readiness — 요청을 받을 수 있는지. 실패하면 트래픽에서 제외
+      probes:
+        enabled: true
+      group:
+        readiness:
+          # DB에 붙지 못하면 요청을 받지 않는다. liveness에는 넣지 않아 DB 장애로 파드가 재시작되지 않게 한다
+          include: readinessState,db
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
