@@ -63,6 +63,10 @@ dangcharge:
     relay:
       enabled: ${OUTBOX_RELAY_ENABLED:true}
       interval: 1000
+  no-show:
+    # 충전 시작 마감(예약 시작 15분 후)이 지난 예약을 NO_SHOW로 바꾼다. 여러 파드에서 돌아도 안전하다
+    enabled: ${NO_SHOW_ENABLED:true}
+    interval: 60000
   station-sync:
     # 레플리카마다 돌기 때문에 한 곳에서만 켠다
     enabled: ${STATION_SYNC_ENABLED:false}

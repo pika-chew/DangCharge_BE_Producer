@@ -111,6 +111,12 @@ public class Reservation extends BaseTimeEntity {
 		this.status = ReservationStatus.CANCELLED;
 	}
 
+	/** 충전 시작 마감이 지나도록 충전을 시작하지 않은 예약 */
+	public void markNoShow() {
+		requireStatus(ReservationStatus.CONFIRMED);
+		this.status = ReservationStatus.NO_SHOW;
+	}
+
 	public void startCharging(Instant startedAt) {
 		requireStatus(ReservationStatus.CONFIRMED);
 		this.status = ReservationStatus.CHARGING;

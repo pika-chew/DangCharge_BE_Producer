@@ -50,4 +50,16 @@ class ReservationTest {
 				.extracting("errorStatus").isEqualTo(ErrorStatus.INVALID_RESERVATION_STATUS);
 	}
 
+	@Test
+	void onlyConfirmedReservationBecomesNoShow() {
+		Reservation confirmed = Reservation.builder().build();
+		confirmed.markNoShow();
+		assertThat(confirmed.getStatus()).isEqualTo(ReservationStatus.NO_SHOW);
+
+		Reservation charging = Reservation.builder().build();
+		charging.startCharging(Instant.now());
+		assertThatThrownBy(charging::markNoShow)
+				.extracting("errorStatus").isEqualTo(ErrorStatus.INVALID_RESERVATION_STATUS);
+	}
+
 }

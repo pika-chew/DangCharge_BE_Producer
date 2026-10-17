@@ -15,6 +15,8 @@ public interface ReservationDomainService {
 
 	void startCharging(Reservation reservation, Instant startedAt);
 
+	void markNoShow(Reservation reservation);
+
 	void complete(Reservation reservation, Instant completedAt);
 
 }
