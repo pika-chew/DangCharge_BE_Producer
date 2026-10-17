@@ -13,6 +13,7 @@ import com.picka_chew.dangcharge.common.exception.ErrorStatus;
 import com.picka_chew.dangcharge.common.exception.GeneralException;
 import com.picka_chew.dangcharge.domain.reservation.entity.Reservation;
 import com.picka_chew.dangcharge.domain.reservation.entity.ReservationStatus;
+import com.picka_chew.dangcharge.domain.reservation.policy.ReservationTimePolicy;
 import com.picka_chew.dangcharge.domain.reservation.repository.ReservationRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -59,6 +60,11 @@ public class ReservationAdaptorImpl implements ReservationAdaptor {
 		}
 		return reservationRepository.findAllByChargerIdInAndStatusInAndStartsAtLessThanAndEndsAtGreaterThan(
 				chargerIds, ReservationStatus.IN_PROGRESS, to, from);
+	}
+
+	@Override
+	public List<Reservation> findNoShowTargetsForUpdate(Instant now, int limit) {
+		return reservationRepository.lockNoShowTargets(now.minus(ReservationTimePolicy.CHECK_IN_CLOSES_AFTER), limit);
 	}
 
 	@Override

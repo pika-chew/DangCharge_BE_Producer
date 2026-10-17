@@ -34,6 +34,11 @@ public class ReservationDomainServiceImpl implements ReservationDomainService {
 	}
 
 	@Override
+	public void markNoShow(Reservation reservation) {
+		reservation.markNoShow();
+	}
+
+	@Override
 	public void startCharging(Reservation reservation, Instant startedAt) {
 		reservation.startCharging(startedAt);
 	}

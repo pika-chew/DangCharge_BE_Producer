@@ -13,7 +13,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** k8s probe가 로그인 없이 헬스 체크 경로를 부를 수 있고, 다른 actuator 엔드포인트는 열려 있지 않은지 확인한다 */
-@SpringBootTest(properties = {"dangcharge.station-import.enabled=false", "dangcharge.outbox.relay.enabled=false"})
+@SpringBootTest(properties = {"dangcharge.station-import.enabled=false", "dangcharge.outbox.relay.enabled=false",
+		"dangcharge.no-show.enabled=false"})
 @AutoConfigureMockMvc
 class HealthCheckTest {
 

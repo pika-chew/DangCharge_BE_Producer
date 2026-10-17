@@ -50,7 +50,9 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(of = "id", callSuper = false)
 @Table(name = "reservations", indexes = {
 		@Index(name = "idx_reservations_user_starts", columnList = "user_id, starts_at"),
-		@Index(name = "idx_reservations_charger_status_time", columnList = "charger_id, status, starts_at, ends_at")
+		@Index(name = "idx_reservations_charger_status_time", columnList = "charger_id, status, starts_at, ends_at"),
+		// 노쇼 처리 대상 조회(status = CONFIRMED, starts_at < ?, order by starts_at, id)용
+		@Index(name = "idx_reservations_status_starts", columnList = "status, starts_at, id")
 })
 public class Reservation extends BaseTimeEntity {
 
@@ -109,6 +111,12 @@ public class Reservation extends BaseTimeEntity {
 	public void cancel() {
 		requireStatus(ReservationStatus.CONFIRMED);
 		this.status = ReservationStatus.CANCELLED;
+	}
+
+	/** 충전 시작 마감이 지나도록 충전을 시작하지 않은 예약 */
+	public void markNoShow() {
+		requireStatus(ReservationStatus.CONFIRMED);
+		this.status = ReservationStatus.NO_SHOW;
 	}
 
 	public void startCharging(Instant startedAt) {

@@ -31,4 +31,7 @@ public interface ReservationAdaptor {
 
 	Page<Reservation> findCompletedByUserId(Long userId, Pageable pageable);
 
+	/** 충전 시작 마감이 지난 CONFIRMED 예약을 잠그며 가져온다. 트랜잭션 안에서만 부른다 */
+	List<Reservation> findNoShowTargetsForUpdate(Instant now, int limit);
+
 }

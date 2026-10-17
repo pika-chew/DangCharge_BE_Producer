@@ -40,7 +40,8 @@ import com.picka_chew.dangcharge.domain.vehicle.entity.VehicleModel;
  * 여러 사용자가 같은 충전기·같은 시간을 동시에 예약하면 하나만 저장되는지 실제 MySQL로 확인한다.
  * 스레드마다 커밋해야 해서 롤백 대신 테스트가 만든 데이터를 직접 지운다.
  */
-@SpringBootTest(properties = {"dangcharge.station-import.enabled=false", "dangcharge.outbox.relay.enabled=false"})
+@SpringBootTest(properties = {"dangcharge.station-import.enabled=false", "dangcharge.outbox.relay.enabled=false",
+		"dangcharge.no-show.enabled=false"})
 class CreateReservationConcurrencyTest {
 
 	private static final int USERS = 8;

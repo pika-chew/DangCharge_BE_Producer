@@ -87,6 +87,7 @@ CREATE TABLE reservations (
     PRIMARY KEY (id),
     KEY idx_reservations_user_starts (user_id, starts_at),
     KEY idx_reservations_charger_status_time (charger_id, status, starts_at, ends_at),
+    KEY idx_reservations_status_starts (status, starts_at, id),
     KEY idx_reservations_user_status_completed (user_id, status, completed_at),
     CONSTRAINT fk_reservations_user FOREIGN KEY (user_id) REFERENCES users (id),
     CONSTRAINT fk_reservations_charger FOREIGN KEY (charger_id) REFERENCES chargers (id),
