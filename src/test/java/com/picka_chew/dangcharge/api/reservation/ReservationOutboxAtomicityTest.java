@@ -39,7 +39,8 @@ import com.picka_chew.dangcharge.infra.outbox.OutboxRecorder;
  * 이벤트 기록 앞뒤에서 예외를 일으켜, 예약과 이벤트가 둘 다 남지 않는지(원자성) 본다.
  * 커밋된 데이터를 확인해야 해서 롤백 대신 테스트가 만든 데이터를 직접 지운다.
  */
-@SpringBootTest(properties = {"dangcharge.station-import.enabled=false", "dangcharge.outbox.relay.enabled=false"})
+@SpringBootTest(properties = {"dangcharge.station-import.enabled=false", "dangcharge.outbox.relay.enabled=false",
+		"dangcharge.no-show.enabled=false"})
 @Import(ReservationOutboxAtomicityTest.FailingRecorderConfig.class)
 class ReservationOutboxAtomicityTest {
 

@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -39,6 +40,19 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 			order by r.startsAt desc
 			""")
 	List<Reservation> findInProgressByUserId(@Param("userId") Long userId, @Param("now") Instant now);
+
+	/**
+	 * 노쇼 처리 대상(충전 시작 마감이 지난 CONFIRMED 예약)을 잠그며 가져온다.
+	 * 다른 파드가 잠근 행은 건너뛰어 레플리카가 여럿이어도 같은 예약을 두 번 처리하지 않는다.
+	 */
+	@NativeQuery("""
+			select * from reservations
+			where status = 'CONFIRMED' and starts_at < :startedBefore
+			order by starts_at, id
+			limit :limit
+			for update skip locked
+			""")
+	List<Reservation> lockNoShowTargets(@Param("startedBefore") Instant startedBefore, @Param("limit") int limit);
 
 	@Query("""
 			select r from Reservation r join fetch r.charger c join fetch c.station
