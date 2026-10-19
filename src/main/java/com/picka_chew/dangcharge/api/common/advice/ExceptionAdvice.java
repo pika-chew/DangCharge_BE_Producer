@@ -1,6 +1,7 @@
 package com.picka_chew.dangcharge.api.common.advice;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -43,6 +44,14 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
 		}
 		log.warn("DB 제약 위반: {}", message);
 		return toResponse(ErrorStatus.CONFLICT);
+	}
+
+	/** 락 대기 시간(innodb_lock_wait_timeout)을 넘겼거나 데드락으로 롤백된 경우. 다시 시도하면 성공할 수 있다 */
+	@ExceptionHandler(PessimisticLockingFailureException.class)
+	public ResponseEntity<ApiResponseDto<Void>> handlePessimisticLockingFailure(
+			PessimisticLockingFailureException exception) {
+		log.warn("락 획득 실패: {}", exception.getMostSpecificCause().getMessage());
+		return toResponse(ErrorStatus.SERVICE_BUSY);
 	}
 
 	@ExceptionHandler(Exception.class)
