@@ -15,6 +15,7 @@ public enum ErrorStatus {
 	FORBIDDEN(HttpStatus.FORBIDDEN, "FORBIDDEN", "권한이 없습니다"),
 	CONFLICT(HttpStatus.CONFLICT, "CONFLICT", "요청이 현재 데이터와 충돌합니다"),
 	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 에러, 관리자에게 문의 바랍니다"),
+	SERVICE_BUSY(HttpStatus.SERVICE_UNAVAILABLE, "SERVICE_BUSY", "요청이 몰려 처리하지 못했습니다. 잠시 후 다시 시도해 주세요"),
 
 	// 인증·사용자
 	DUPLICATED_LOGIN_ID(HttpStatus.CONFLICT, "DUPLICATED_LOGIN_ID", "이미 사용 중인 아이디입니다"),
