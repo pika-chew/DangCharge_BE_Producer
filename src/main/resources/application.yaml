@@ -7,6 +7,12 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    hikari:
+      # 락 대기는 5초에서 포기한다(기본 50초). 락이 안 풀리는 행에 요청이 몰려도 커넥션 풀이 오래 묶이지 않는다
+      # 5분 동안 명령이 없는 세션은 MySQL이 끊는다(기본 8시간). 노드 장애로 죽은 세션이 잡은 락이 그만큼만 남는다
+      connection-init-sql: SET SESSION innodb_lock_wait_timeout = 5, SESSION wait_timeout = 300
+      # MySQL이 끊기 전에 풀에서 먼저 교체한다. wait_timeout(5분)보다 짧아야 한다
+      max-lifetime: 240000
   jpa:
     open-in-view: false
     hibernate:
